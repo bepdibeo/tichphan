@@ -54,15 +54,44 @@ with col2:
 
 # XỬ LÝ HÀM NGƯỜI DÙNG
 x = sp.Symbol('x')
+
+# Bước 1: Kiểm tra cú pháp biểu thức 
 try:
     f_expr = sp.sympify(expr_str)
     f_lambda = sp.lambdify(x, f_expr, "numpy")
-    I_exact = float(sp.integrate(f_expr, (x, a, b)))
 except Exception as e:
-    st.error(f"Lỗi khi đọc hàm: {e}")
+    st.error("Cú pháp hàm không hợp lệ. Hãy kiểm tra lại (ví dụ: sin(x), e**x, x**2, log(x), ...)")
     st.stop()
 
+# Bước 2: Kiểm tra miền xác định trên đoạn [a, b] 
+X_test = np.linspace(a, b, 400)
+try:
+    Y_test = f_lambda(X_test)
+except Exception as e:
+    st.error(f"Lỗi khi tính giá trị hàm trên đoạn [{a}, {b}]. Có thể hàm không xác định tại một số điểm.\n\nChi tiết: {e}")
+    st.stop()
+
+# Bước 3: Kiểm tra giá trị phức, vô hạn, hoặc NaN 
+if np.any(np.iscomplex(Y_test)):
+    st.error("Hàm trả về giá trị phức trên đoạn tích phân. "
+             "Vui lòng chọn khoảng không chứa điểm khiến mẫu số âm hoặc căn của số âm.")
+    st.stop()
+
+if np.any(~np.isfinite(Y_test)):
+    st.error("Hàm có giá trị vô hạn hoặc không xác định (inf / nan) trong khoảng tích phân.\n"
+             "Vui lòng chọn đoạn không chứa tiệm cận hoặc điểm kỳ dị.")
+    st.stop()
+
+# Bước 4: Tính tích phân chính xác (nếu có thể) 
+try:
+    I_exact = float(sp.integrate(f_expr, (x, a, b)))
+except Exception:
+    st.warning("Không thể tính chính xác tích phân biểu tượng cho hàm này. "
+               "Hệ thống sẽ chỉ so sánh kết quả gần đúng.")
+    I_exact = None
+
 # HÀM TÍNH THEO SAI SỐ HOẶC SỐ KHOẢNG
+
 def compute_with_tolerance(f, a, b, rule_func, epsilon=None, n=None):
     prev = None
     if epsilon is not None:
@@ -78,6 +107,7 @@ def compute_with_tolerance(f, a, b, rule_func, epsilon=None, n=None):
     return I1, n
 
 # TÍNH KẾT QUẢ
+
 I_trap = I_simp = None
 n_used_trap = n_used_simp = None
 err_trap = err_simp = None
@@ -142,6 +172,7 @@ if method in ["Simpson", "Cả hai"]:
     st.dataframe(make_table(X_simp, Y_simp, "Simpson"), use_container_width=True)
 
 # TÙY CHỌN HIỂN THỊ ĐỒ THỊ
+    
 st.subheader("Tùy chọn hiển thị đồ thị")
 fill_toggle = st.checkbox("Hiển thị vùng tô dưới đồ thị (tích phân)", value=True)
 
