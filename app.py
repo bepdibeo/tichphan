@@ -7,9 +7,9 @@ import pandas as pd
 st.set_page_config(page_title="So sánh Hình thang và Simpson", layout="wide")
 
 st.title("Hai phương pháp tính gần đúng tích phân")
-st.markdown("### Công thức Hình thang và Simpson")
+st.markdown("### Công thức Hình thang và Simpson – minh họa trực quan")
 
-# Chuẩn hóa hàm nhập
+# ====== Hàm tiện ích ======
 def normalize_expr(expr_str):
     expr_str = expr_str.lower()
     replacements = {'^': '**', 'ln': 'log', '√': 'sqrt', 'e': 'E'}
@@ -17,7 +17,6 @@ def normalize_expr(expr_str):
         expr_str = expr_str.replace(k, v)
     return expr_str
 
-# Công thức Hình thang và Simpson
 def trapezoidal_rule(f, a, b, n):
     x = np.linspace(a, b, n + 1)
     y = f(x)
@@ -32,7 +31,7 @@ def simpson_rule(f, a, b, n):
     h = (b - a) / n
     return (h/3) * (y[0] + y[-1] + 4*np.sum(y[1:-1:2]) + 2*np.sum(y[2:-2:2]))
 
-# --- Nhập liệu ---
+# ====== Giao diện nhập ======
 col1, col2 = st.columns(2)
 with col1:
     expr_str = st.text_input("Nhập hàm f(x):", "exp(x)")
@@ -45,10 +44,10 @@ with col2:
         n = st.number_input("Số khoảng chia n:", min_value=2, value=10, step=1)
         epsilon = None
     else:
-        epsilon = st.number_input("Sai số ε:", min_value=1e-8, value=1e-4, format="%.1e")
+        epsilon = st.number_input("Sai số ε:", min_value=1e-8, value=1e-4, format="%.6f")
         n = None
 
-# --- Chuẩn bị hàm ---
+# ====== Chuẩn bị hàm ======
 x = sp.Symbol('x')
 try:
     f_expr = sp.sympify(expr_str)
@@ -58,7 +57,7 @@ except Exception as e:
     st.error(f"Lỗi khi đọc hàm: {e}")
     st.stop()
 
-# --- Hàm tính theo sai số ---
+# ====== Hàm tính có ε ======
 def compute_with_tolerance(f, a, b, rule_func, epsilon=None, n=None):
     prev = None
     if epsilon is not None:
@@ -73,67 +72,85 @@ def compute_with_tolerance(f, a, b, rule_func, epsilon=None, n=None):
         I1 = rule_func(f, a, b, n)
     return I1, n
 
-# --- Tính kết quả ---
+# ====== Tính toán ======
 I_trap, n_used_trap = compute_with_tolerance(f_lambda, a, b, trapezoidal_rule, epsilon, n)
 I_simp, n_used_simp = compute_with_tolerance(f_lambda, a, b, simpson_rule, epsilon, n)
 err_trap = abs(I_trap - I_exact)
 err_simp = abs(I_simp - I_exact)
 
-# --- Hiển thị kết quả ---
+# ====== Kết quả ======
 st.subheader("Kết quả so sánh")
 cols = st.columns(3)
-cols[0].metric("Tích phân chính xác", f"{I_exact:.6f}")
-cols[1].metric("Hình thang", f"{I_trap:.6f}", f"Sai số: {err_trap:.6f}")
-cols[2].metric("Simpson", f"{I_simp:.6f}", f"Sai số: {err_simp:.6f}")
+cols[0].metric("Tích phân chính xác", f"{I_exact:.8f}")
+cols[1].metric("Hình thang", f"{I_trap:.8f}", f"Sai số: {err_trap:.8f}")
+cols[2].metric("Simpson", f"{I_simp:.8f}", f"Sai số: {err_simp:.8f}")
 st.caption(f"Số khoảng: Hình thang = {n_used_trap}, Simpson = {n_used_simp}")
 
-# --- Minh họa vùng tích phân ---
-st.subheader("Minh họa vùng tích phân (tách biệt)")
+# ====== Minh họa vùng tích phân ======
+st.subheader("Minh họa vùng tích phân")
 
 xx = np.linspace(a, b, 400)
 yy = f_lambda(xx)
 
-colA, colB = st.columns(2)
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=xx, y=yy, mode="lines", name="f(x)", line=dict(color="blue")))
 
-# Biểu đồ Hình thang
-with colA:
-    fig_trap = go.Figure()
-    fig_trap.add_trace(go.Scatter(x=xx, y=yy, mode="lines", name="f(x)", line=dict(color="blue")))
-    X_trap = np.linspace(a, b, n_used_trap + 1)
-    Y_trap = f_lambda(X_trap)
-    fig_trap.add_trace(go.Scatter(x=X_trap, y=Y_trap, mode="markers+lines",
-                                  name=f"Hình thang (n={n_used_trap})",
-                                  line=dict(color="red", dash="dot")))
-    fig_trap.update_layout(title="Phương pháp Hình thang", xaxis_title="x", yaxis_title="f(x)", height=400)
-    st.plotly_chart(fig_trap, use_container_width=True)
+# --- Tô từng miền hình thang ---
+X_trap = np.linspace(a, b, n_used_trap + 1)
+Y_trap = f_lambda(X_trap)
+for i in range(len(X_trap) - 1):
+    x_fill = [X_trap[i], X_trap[i+1], X_trap[i+1], X_trap[i]]
+    y_fill = [0, 0, Y_trap[i+1], Y_trap[i]]
+    fig.add_trace(go.Scatter(
+        x=x_fill, y=y_fill, fill="toself",
+        fillcolor="rgba(255,100,100,0.3)",
+        line=dict(color="rgba(255,100,100,0.3)"),
+        showlegend=False
+    ))
+fig.add_trace(go.Scatter(x=X_trap, y=Y_trap, mode="markers+lines",
+                         name=f"Hình thang (n={n_used_trap})",
+                         line=dict(color="red", dash="dot"), marker=dict(size=6)))
 
-# Biểu đồ Simpson
-with colB:
-    fig_simp = go.Figure()
-    fig_simp.add_trace(go.Scatter(x=xx, y=yy, mode="lines", name="f(x)", line=dict(color="blue")))
-    X_simp = np.linspace(a, b, n_used_simp + 1)
-    Y_simp = f_lambda(X_simp)
-    fig_simp.add_trace(go.Scatter(x=X_simp, y=Y_simp, mode="markers+lines",
-                                  name=f"Simpson (n={n_used_simp})",
-                                  line=dict(color="green", dash="dot")))
-    fig_simp.update_layout(title="Phương pháp Simpson", xaxis_title="x", yaxis_title="f(x)", height=400)
-    st.plotly_chart(fig_simp, use_container_width=True)
+# --- Tô từng miền Simpson ---
+X_simp = np.linspace(a, b, n_used_simp + 1)
+Y_simp = f_lambda(X_simp)
+for i in range(0, len(X_simp) - 2, 2):
+    x_sub = np.linspace(X_simp[i], X_simp[i+2], 30)
+    # dùng nội suy bậc 2 giữa 3 điểm Simpson
+    y_sub = np.interp(x_sub, [X_simp[i], X_simp[i+1], X_simp[i+2]],
+                      [Y_simp[i], Y_simp[i+1], Y_simp[i+2]])
+    fig.add_trace(go.Scatter(x=x_sub, y=y_sub, fill="toself",
+                             fillcolor="rgba(100,255,100,0.3)",
+                             line=dict(color="green"), showlegend=False))
+fig.add_trace(go.Scatter(x=X_simp, y=Y_simp, mode="markers+lines",
+                         name=f"Simpson (n={n_used_simp})",
+                         line=dict(color="green", dash="dot"), marker=dict(size=6)))
 
-# --- Bảng giá trị các điểm chia ---
-st.subheader("Bảng giá trị tại các điểm chia")
+fig.update_layout(
+    xaxis_title="x",
+    yaxis_title="f(x)",
+    title="Minh họa vùng tích phân theo hai phương pháp",
+    height=500,
+    legend_title="Phương pháp",
+)
+st.plotly_chart(fig, use_container_width=True)
 
-df_trap = pd.DataFrame({"x_i": X_trap, "f(x_i)": [f"{v:.6f}" for v in Y_trap]})
-df_simp = pd.DataFrame({"x_i": X_simp, "f(x_i)": [f"{v:.6f}" for v in Y_simp]})
+# ====== Bảng giá trị ======
+st.subheader("Bảng giá trị (xᵢ, f(xᵢ))")
 
-colT, colS = st.columns(2)
-with colT:
-    st.markdown("**Phương pháp Hình thang**")
-    st.dataframe(df_trap, use_container_width=True)
-with colS:
-    st.markdown("**Phương pháp Simpson**")
-    st.dataframe(df_simp, use_container_width=True)
+tab1, tab2 = st.tabs(["Hình thang", "Simpson"])
+with tab1:
+    df_trap = pd.DataFrame({"i": range(len(X_trap)), "xᵢ": X_trap, "f(xᵢ)": Y_trap})
+    df_trap["xᵢ"] = df_trap["xᵢ"].map(lambda v: f"{v:.6f}")
+    df_trap["f(xᵢ)"] = df_trap["f(xᵢ)"].map(lambda v: f"{v:.6f}")
+    st.dataframe(df_trap, hide_index=True, use_container_width=True)
+with tab2:
+    df_simp = pd.DataFrame({"i": range(len(X_simp)), "xᵢ": X_simp, "f(xᵢ)": Y_simp})
+    df_simp["xᵢ"] = df_simp["xᵢ"].map(lambda v: f"{v:.6f}")
+    df_simp["f(xᵢ)"] = df_simp["f(xᵢ)"].map(lambda v: f"{v:.6f}")
+    st.dataframe(df_simp, hide_index=True, use_container_width=True)
 
-# --- Biểu đồ hội tụ sai số ---
+# ====== Biểu đồ hội tụ sai số ======
 st.subheader("Biểu đồ hội tụ sai số")
 
 ns = [4, 8, 16, 32, 64, 128]
@@ -145,11 +162,10 @@ fig_err.add_trace(go.Scatter(x=np.log10(ns), y=np.log10(err_trap_list),
                              mode="lines+markers", name="Hình thang", line=dict(color="red")))
 fig_err.add_trace(go.Scatter(x=np.log10(ns), y=np.log10(err_simp_list),
                              mode="lines+markers", name="Simpson", line=dict(color="green")))
-
 fig_err.update_layout(
-    xaxis_title="log10(n)",
-    yaxis_title="log10(|Sai số|)",
-    title="So sánh tốc độ hội tụ sai số (trên thang log-log)",
+    xaxis_title="log₁₀(n)",
+    yaxis_title="log₁₀(|Sai số|)",
+    title="So sánh tốc độ hội tụ sai số",
     height=500,
     legend_title="Công thức"
 )
