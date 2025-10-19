@@ -9,9 +9,7 @@ st.set_page_config(page_title="Tích phân gần đúng", layout="wide")
 st.title("So sánh hai phương pháp tính gần đúng tích phân")
 st.markdown("### Phương pháp Hình thang và Simpson")
 
-# ───────────────────────────────
 # HÀM CHUẨN HÓA BIỂU THỨC NGƯỜI DÙNG
-# ───────────────────────────────
 def normalize_expr(expr_str):
     expr_str = expr_str.lower()
     replacements = {'^': '**', 'ln': 'log', '√': 'sqrt', 'e': 'E'}
@@ -19,9 +17,8 @@ def normalize_expr(expr_str):
         expr_str = expr_str.replace(k, v)
     return expr_str
 
-# ───────────────────────────────
+
 # HAI CÔNG THỨC TÍNH TÍCH PHÂN
-# ───────────────────────────────
 def trapezoidal_rule(f, a, b, n):
     x = np.linspace(a, b, n + 1)
     y = f(x)
@@ -36,9 +33,9 @@ def simpson_rule(f, a, b, n):
     h = (b - a) / n
     return (h/3)*(y[0] + y[-1] + 4*np.sum(y[1:-1:2]) + 2*np.sum(y[2:-2:2]))
 
-# ───────────────────────────────
+
 # GIAO DIỆN NHẬP LIỆU
-# ───────────────────────────────
+
 col1, col2 = st.columns(2)
 with col1:
     expr_str = st.text_input("Nhập hàm f(x):", "x**2")
@@ -56,9 +53,7 @@ with col2:
         epsilon = st.number_input("Sai số ε:", min_value=1e-8, value=1e-4, format="%.1e")
         n = None
 
-# ───────────────────────────────
 # XỬ LÝ HÀM NGƯỜI DÙNG
-# ───────────────────────────────
 x = sp.Symbol('x')
 try:
     f_expr = sp.sympify(expr_str)
@@ -68,9 +63,7 @@ except Exception as e:
     st.error(f"Lỗi khi đọc hàm: {e}")
     st.stop()
 
-# ───────────────────────────────
 # HÀM TÍNH THEO SAI SỐ HOẶC SỐ KHOẢNG
-# ───────────────────────────────
 def compute_with_tolerance(f, a, b, rule_func, epsilon=None, n=None):
     prev = None
     if epsilon is not None:
@@ -85,9 +78,7 @@ def compute_with_tolerance(f, a, b, rule_func, epsilon=None, n=None):
         I1 = rule_func(f, a, b, n)
     return I1, n
 
-# ───────────────────────────────
 # TÍNH KẾT QUẢ
-# ───────────────────────────────
 I_trap = I_simp = None
 n_used_trap = n_used_simp = None
 err_trap = err_simp = None
@@ -100,9 +91,7 @@ if method in ["Simpson", "Cả hai"]:
     I_simp, n_used_simp = compute_with_tolerance(f_lambda, a, b, simpson_rule, epsilon, n)
     err_simp = abs(I_simp - I_exact)
 
-# ───────────────────────────────
 # HIỂN THỊ KẾT QUẢ
-# ───────────────────────────────
 st.subheader("Kết quả")
 cols = st.columns(3)
 cols[0].metric("Tích phân chính xác", f"{I_exact:.6f}")
@@ -112,18 +101,15 @@ if method in ["Hình thang", "Cả hai"]:
 if method in ["Simpson", "Cả hai"]:
     cols[2].metric("Simpson", f"{I_simp:.6f}", f"Sai số: {err_simp:.6f}")
 
-# ───────────────────────────────
 # TÙY CHỌN HIỂN THỊ
-# ───────────────────────────────
 st.subheader("Tùy chọn hiển thị đồ thị")
 fill_toggle = st.checkbox("Hiển thị vùng tô dưới đồ thị (tích phân)", value=True)
 
 xx = np.linspace(a, b, 400)
 yy = f_lambda(xx)
 
-# ───────────────────────────────
 # MINH HỌA PHƯƠNG PHÁP HÌNH THANG
-# ───────────────────────────────
+
 if method in ["Hình thang", "Cả hai"]:
     st.subheader("Minh họa phương pháp Hình thang")
     X_trap = np.linspace(a, b, n_used_trap + 1)
@@ -143,37 +129,49 @@ if method in ["Hình thang", "Cả hai"]:
     fig_trap.update_layout(xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig_trap, use_container_width=True)
 
-# ───────────────────────────────
 # MINH HỌA PHƯƠNG PHÁP SIMPSON
-# ───────────────────────────────
+# Biểu đồ Simpson 
 if method in ["Simpson", "Cả hai"]:
     st.subheader("Minh họa phương pháp Simpson")
     X_simp = np.linspace(a, b, n_used_simp + 1)
     Y_simp = f_lambda(X_simp)
 
     fig_simp = go.Figure()
-    fig_simp.add_trace(go.Scatter(x=xx, y=yy, mode="lines", name="f(x)", line=dict(color="blue")))
+    fig_simp.add_trace(go.Scatter(
+        x=xx, y=yy, mode="lines", name="f(x)", line=dict(color="blue")))
+
     if fill_toggle:
         for i in range(0, n_used_simp, 2):
             xs = np.linspace(X_simp[i], X_simp[i+2], 40)
             coeffs = np.polyfit([X_simp[i], X_simp[i+1], X_simp[i+2]],
                                 [Y_simp[i], Y_simp[i+1], Y_simp[i+2]], 2)
             ys = np.polyval(coeffs, xs)
+
+            # Vùng tô
             fig_simp.add_trace(go.Scatter(
                 x=[*xs, xs[-1], xs[0]], y=[*ys, 0, 0],
                 fill="toself", fillcolor="rgba(0,255,0,0.25)",
                 line=dict(color="rgba(0,255,0,0.2)"), showlegend=False))
-            # Đường parabol nội suy
-            fig_simp.add_trace(go.Scatter(x=xs, y=ys, mode="lines", name="Cung parabol nội suy",
-                                          line=dict(color="limegreen", dash="dot")))
-    fig_simp.add_trace(go.Scatter(x=X_simp, y=Y_simp, mode="lines+markers",
-                                  name="Các điểm chia", line=dict(color="green", dash="dot")))
-    fig_simp.update_layout(xaxis_title="x", yaxis_title="f(x)", height=450)
+            
+            # Cung parabol nội suy 
+            fig_simp.add_trace(go.Scatter(
+                x=xs, y=ys, mode="lines",
+                name="Cung parabol nội suy" if i == 0 else None,
+                line=dict(color="mediumseagreen", dash="dashdot"),
+                showlegend=(i == 0)))
+
+    # Các điểm chia
+    fig_simp.add_trace(go.Scatter(
+        x=X_simp, y=Y_simp, mode="lines+markers",
+        name="Các điểm chia", line=dict(color="green", dash="dot")))
+
+    fig_simp.update_layout(
+        xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig_simp, use_container_width=True)
 
-# ───────────────────────────────
+
 # BẢNG GIÁ TRỊ
-# ───────────────────────────────
+
 st.subheader("Bảng giá trị tại các điểm chia")
 
 if method in ["Hình thang", "Cả hai"]:
