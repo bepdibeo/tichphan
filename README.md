@@ -1,5 +1,5 @@
 ## NHÓM 1 - Ứng dụng minh họa hai phương pháp tính gần đúng tích phân
-Ứng dụng được viết bằng **Python và Streamlit**, giúp **trực quan hóa quá trình tính gần đúng tích phân** bằng hai quy tắc cơ bản:
+Ứng dụng được viết bằng **Python và Streamlit**, giúp **trực quan hóa quá trình tính gần đúng tích phân** bằng hai phương pháp cơ bản:
 
 * **Phương pháp Hình thang (Trapezoidal rule)** – xấp xỉ hàm bằng các đoạn thẳng nối các điểm chia.
 * **Phương pháp Simpson** – xấp xỉ hàm bằng các cung **parabol bậc 2 nội suy** nối các điểm chia.
