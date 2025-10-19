@@ -84,7 +84,7 @@ if "Hình thang" in methods:
     results["Hình thang"] = (I_trap, X_trap, Y_trap)
 if "Simpson" in methods:
     I_simp, X_simp, Y_simp = calc_simpson(f_lambda, a, b, n)
-    results["Simpson 1/3"] = (I_simp, X_simp, Y_simp)
+    results["Simpson"] = (I_simp, X_simp, Y_simp)
 
 # Hiển thị kết quả
 st.subheader("Kết quả tính toán")
@@ -153,4 +153,5 @@ if I_exact is not None:
     st.plotly_chart(fig_err, use_container_width=True)
 
 st.caption("Minh họa công thức Hình thang và Simpson.")
+
 
