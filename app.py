@@ -18,9 +18,8 @@ def normalize_expr(expr_str):
         expr_str = expr_str.replace(k, v)
     return expr_str
 
-# -------------------------------
 # Các công thức tính tích phân gần đúng
-# -------------------------------
+
 def trapezoidal_rule(f, a, b, n):
     x = np.linspace(a, b, n + 1)
     y = f(x)
@@ -152,7 +151,7 @@ with colB:
     st.plotly_chart(fig_simp, use_container_width=True)
 
 
-# Bảng giá trị tại các điểm chia (có sai số)
+# Bảng giá trị tại các điểm chia 
 
 st.subheader("Bảng giá trị tại các điểm chia")
 
@@ -163,7 +162,7 @@ with colT:
     df_trap = pd.DataFrame({
         "xᵢ": [f"{x:.6f}" for x in X_trap],
         "f(xᵢ)": [f"{y:.6f}" for y in Y_trap],
-        "Sai số từng điểm": [f"{abs(Y_trap[i] - Y_exact_trap[i]):.6f}" for i in range(len(X_trap))]
+        "Sai số": [f"{abs(Y_trap[i] - Y_exact_trap[i]):.6f}" for i in range(len(X_trap))]
     })
     st.dataframe(df_trap, use_container_width=True)
 
@@ -173,6 +172,6 @@ with colS:
     df_simp = pd.DataFrame({
         "xᵢ": [f"{x:.6f}" for x in X_simp],
         "f(xᵢ)": [f"{y:.6f}" for y in Y_simp],
-        "Sai số từng điểm": [f"{abs(Y_simp[i] - Y_exact_simp[i]):.6f}" for i in range(len(X_simp))]
+        "Sai số": [f"{abs(Y_simp[i] - Y_exact_simp[i]):.6f}" for i in range(len(X_simp))]
     })
     st.dataframe(df_simp, use_container_width=True)
