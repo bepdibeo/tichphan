@@ -34,7 +34,6 @@ def simpson_rule(f, a, b, n):
     return (h/3)*(y[0] + y[-1] + 4*np.sum(y[1:-1:2]) + 2*np.sum(y[2:-2:2]))
 
 # GIAO DIỆN NHẬP LIỆU
-
 col1, col2 = st.columns(2)
 with col1:
     expr_str = st.text_input("Nhập hàm f(x):", "x**2")
@@ -91,7 +90,6 @@ except Exception:
     I_exact = None
 
 # HÀM TÍNH THEO SAI SỐ HOẶC SỐ KHOẢNG
-
 def compute_with_tolerance(f, a, b, rule_func, epsilon=None, n=None):
     prev = None
     if epsilon is not None:
@@ -105,6 +103,23 @@ def compute_with_tolerance(f, a, b, rule_func, epsilon=None, n=None):
     else:
         I1 = rule_func(f, a, b, n)
     return I1, n
+
+# TÍNH SAI SỐ LÝ THUYẾT
+def theoretical_error(f_expr, a, b, n, method):
+    x = sp.Symbol('x')
+    try:
+        if method == "Hình thang":
+            f2 = sp.diff(f_expr, x, 2)
+            f2_lamb = sp.lambdify(x, f2, "numpy")
+            M2 = np.max(np.abs(f2_lamb(np.linspace(a, b, 1000))))
+            return (b - a)**3 / (12 * n**2) * M2
+        elif method == "Simpson":
+            f4 = sp.diff(f_expr, x, 4)
+            f4_lamb = sp.lambdify(x, f4, "numpy")
+            M4 = np.max(np.abs(f4_lamb(np.linspace(a, b, 1000))))
+            return (b - a)**5 / (180 * n**4) * M4
+    except:
+        return None
 
 # TÍNH KẾT QUẢ
 
@@ -127,8 +142,18 @@ cols[0].metric("Tích phân chính xác", f"{I_exact:.6f}")
 
 if method in ["Hình thang", "Cả hai"]:
     cols[1].metric("Hình thang", f"{I_trap:.6f}", f"Sai số: {err_trap:.6f}")
+    err_trap_theory = theoretical_error(f_expr, a, b, n_used_trap, "Hình thang")
+    text = f"Sai số: {err_trap:.6f}" if I_exact is not None else ""
+    if err_trap_theory is not None:
+        text += f" | Sai số lý thuyết: {err_trap_theory:.6f}"
+    cols[1].metric("Hình thang", f"{I_trap:.6f}", text)
 if method in ["Simpson", "Cả hai"]:
     cols[2].metric("Simpson", f"{I_simp:.6f}", f"Sai số: {err_simp:.6f}")
+    err_simp_theory = theoretical_error(f_expr, a, b, n_used_simp, "Simpson")
+    text = f"Sai số: {err_simp:.6f}" if I_exact is not None else ""
+    if err_simp_theory is not None:
+        text += f" | Sai số lý thuyết: {err_simp_theory:.6f}"
+    cols[2].metric("Simpson", f"{I_simp:.6f}", text)
 
 # BẢNG GIÁ TRỊ
 
@@ -239,3 +264,4 @@ if method in ["Simpson", "Cả hai"]:
     fig_simp.update_layout(
         xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig_simp, use_container_width=True)
+
