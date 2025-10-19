@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="Tích phân gần đúng – Hình thang và Simpson", layout="wide")
 
-st.title("ỨNG DỤNG MINH HỌA TÍNH TÍCH PHÂN GẦN ĐÚNG")
+st.title("TÍNH TÍCH PHÂN GẦN ĐÚNG")
 st.markdown("### Bằng công thức Hình thang và Simpson")
 
 # Giao diện nhập 
@@ -25,7 +25,7 @@ methods = st.multiselect(
 )
 
 if mode == "Nhập số khoảng n":
-    n = st.slider("Số khoảng chia n:", min_value=2, max_value=200, value=6, step=2)
+    n = st.number_input("Số khoảng chia n:", min_value=2, value=6, step=1)
     eps = None
 else:
     eps = st.number_input("Sai số tối đa ε:", value=0.001, min_value=1e-8, step=1e-4, format="%.6f")
@@ -82,7 +82,7 @@ results = {}
 if "Hình thang" in methods:
     I_trap, X_trap, Y_trap = calc_trapezoidal(f_lambda, a, b, n)
     results["Hình thang"] = (I_trap, X_trap, Y_trap)
-if "Simpson 1/3" in methods:
+if "Simpson" in methods:
     I_simp, X_simp, Y_simp = calc_simpson(f_lambda, a, b, n)
     results["Simpson 1/3"] = (I_simp, X_simp, Y_simp)
 
@@ -142,7 +142,7 @@ if I_exact is not None:
     fig_err.add_trace(go.Scatter(x=np.log10(ns), y=np.log10(err_trap),
                                  mode="lines+markers", name="Hình thang", line=dict(color="red")))
     fig_err.add_trace(go.Scatter(x=np.log10(ns), y=np.log10(err_simp),
-                                 mode="lines+markers", name="Simpson 1/3", line=dict(color="green")))
+                                 mode="lines+markers", name="Simpson", line=dict(color="green")))
     fig_err.update_layout(
         xaxis_title="log10(n)",
         yaxis_title="log10(Sai số)",
@@ -152,4 +152,5 @@ if I_exact is not None:
     )
     st.plotly_chart(fig_err, use_container_width=True)
 
-st.caption("Ứng dụng minh họa công thức Hình thang và Simpson.")
+st.caption("Minh họa công thức Hình thang và Simpson.")
+
