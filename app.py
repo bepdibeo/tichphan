@@ -141,22 +141,19 @@ cols = st.columns(3)
 cols[0].metric("Tích phân chính xác", f"{I_exact:.6f}")
 
 if method in ["Hình thang", "Cả hai"]:
-    cols[1].metric("Hình thang", f"{I_trap:.6f}", f"Sai số: {err_trap:.6f}")
     err_trap_theory = theoretical_error(f_expr, a, b, n_used_trap, "Hình thang")
-    text = f"Sai số: {err_trap:.6f}" if I_exact is not None else ""
+    text = f"Sai số thực nghiệm: {err_trap:.6f}" if I_exact is not None else ""
     if err_trap_theory is not None:
-        text += f" | Sai số lý thuyết: {err_trap_theory:.6f}"
+        text += f"  |  Sai số lý thuyết: {err_trap_theory:.6f}"
     cols[1].metric("Hình thang", f"{I_trap:.6f}", text)
 if method in ["Simpson", "Cả hai"]:
-    cols[2].metric("Simpson", f"{I_simp:.6f}", f"Sai số: {err_simp:.6f}")
     err_simp_theory = theoretical_error(f_expr, a, b, n_used_simp, "Simpson")
-    text = f"Sai số: {err_simp:.6f}" if I_exact is not None else ""
+    text = f"Sai số thực nghiệm: {err_simp:.6f}" if I_exact is not None else ""
     if err_simp_theory is not None:
-        text += f" | Sai số lý thuyết: {err_simp_theory:.6f}"
+        text += f"  |  Sai số lý thuyết: {err_simp_theory:.6f}"
     cols[2].metric("Simpson", f"{I_simp:.6f}", text)
 
 # BẢNG GIÁ TRỊ
-
 st.subheader("Bảng giá trị tại các điểm chia")
 
 def make_table(X, Y, method):
@@ -197,7 +194,6 @@ if method in ["Simpson", "Cả hai"]:
     st.dataframe(make_table(X_simp, Y_simp, "Simpson"), use_container_width=True)
 
 # TÙY CHỌN HIỂN THỊ ĐỒ THỊ
-    
 st.subheader("Tùy chọn hiển thị đồ thị")
 fill_toggle = st.checkbox("Hiển thị vùng tô dưới đồ thị (tích phân)", value=True)
 
@@ -205,7 +201,6 @@ xx = np.linspace(a, b, 400)
 yy = f_lambda(xx)
 
 # ĐỒ THỊ MINH HỌA PHƯƠNG PHÁP HÌNH THANG
-
 if method in ["Hình thang", "Cả hai"]:
     st.subheader("Minh họa phương pháp Hình thang")
     X_trap = np.linspace(a, b, n_used_trap + 1)
@@ -226,7 +221,6 @@ if method in ["Hình thang", "Cả hai"]:
     st.plotly_chart(fig_trap, use_container_width=True)
 
 # ĐỒ THỊ MINH HỌA PHƯƠNG PHÁP SIMPSON
-
 if method in ["Simpson", "Cả hai"]:
     st.subheader("Minh họa phương pháp Simpson")
     X_simp = np.linspace(a, b, n_used_simp + 1)
@@ -264,4 +258,3 @@ if method in ["Simpson", "Cả hai"]:
     fig_simp.update_layout(
         xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig_simp, use_container_width=True)
-
