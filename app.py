@@ -33,7 +33,6 @@ def simpson_rule(f, a, b, n):
     h = (b - a) / n
     return (h/3)*(y[0] + y[-1] + 4*np.sum(y[1:-1:2]) + 2*np.sum(y[2:-2:2]))
 
-
 # GIAO DIỆN NHẬP LIỆU
 
 col1, col2 = st.columns(2)
@@ -101,14 +100,55 @@ if method in ["Hình thang", "Cả hai"]:
 if method in ["Simpson", "Cả hai"]:
     cols[2].metric("Simpson", f"{I_simp:.6f}", f"Sai số: {err_simp:.6f}")
 
-# TÙY CHỌN HIỂN THỊ
+# BẢNG GIÁ TRỊ
+
+st.subheader("Bảng giá trị tại các điểm chia")
+
+def make_table(X, Y, method):
+    n = len(X) - 1
+    h = (X[-1] - X[0]) / n
+    if method == "Hình thang":
+        weights = np.ones_like(Y)
+        weights[0] = weights[-1] = 0.5
+    elif method == "Simpson":
+        weights = np.ones_like(Y)
+        weights[1:-1:2] = 4
+        weights[2:-2:2] = 2
+    else:
+        weights = np.ones_like(Y)
+
+    wf = weights * Y
+    total = np.sum(wf)
+
+    df = pd.DataFrame({
+        "xᵢ": [f"{x:.6f}" for x in X],
+        "f(xᵢ)": [f"{y:.6f}" for y in Y],
+        "Trọng số (wᵢ)": [f"{w:.2f}" for w in weights],
+        "wᵢ·f(xᵢ)": [f"{p:.6f}" for p in wf]
+    })
+    df.loc[len(df.index)] = ["—", "—", "Tổng:", f"{total:.6f}"]
+    return df
+
+if method in ["Hình thang", "Cả hai"]:
+    st.markdown("**Phương pháp Hình thang**")
+    X_trap = np.linspace(a, b, n_used_trap + 1)
+    Y_trap = f_lambda(X_trap)
+    st.dataframe(make_table(X_trap, Y_trap, "Hình thang"), use_container_width=True)
+
+if method in ["Simpson", "Cả hai"]:
+    st.markdown("**Phương pháp Simpson**")
+    X_simp = np.linspace(a, b, n_used_simp + 1)
+    Y_simp = f_lambda(X_simp)
+    st.dataframe(make_table(X_simp, Y_simp, "Simpson"), use_container_width=True)
+
+# TÙY CHỌN HIỂN THỊ ĐỒ THỊ
 st.subheader("Tùy chọn hiển thị đồ thị")
 fill_toggle = st.checkbox("Hiển thị vùng tô dưới đồ thị (tích phân)", value=True)
 
 xx = np.linspace(a, b, 400)
 yy = f_lambda(xx)
 
-# MINH HỌA PHƯƠNG PHÁP HÌNH THANG
+# ĐỒ THỊ MINH HỌA PHƯƠNG PHÁP HÌNH THANG
 
 if method in ["Hình thang", "Cả hai"]:
     st.subheader("Minh họa phương pháp Hình thang")
@@ -129,8 +169,8 @@ if method in ["Hình thang", "Cả hai"]:
     fig_trap.update_layout(xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig_trap, use_container_width=True)
 
-# MINH HỌA PHƯƠNG PHÁP SIMPSON
-# Biểu đồ Simpson 
+# ĐỒ THỊ MINH HỌA PHƯƠNG PHÁP SIMPSON
+
 if method in ["Simpson", "Cả hai"]:
     st.subheader("Minh họa phương pháp Simpson")
     X_simp = np.linspace(a, b, n_used_simp + 1)
@@ -168,26 +208,3 @@ if method in ["Simpson", "Cả hai"]:
     fig_simp.update_layout(
         xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig_simp, use_container_width=True)
-
-
-# BẢNG GIÁ TRỊ
-
-st.subheader("Bảng giá trị tại các điểm chia")
-
-if method in ["Hình thang", "Cả hai"]:
-    st.markdown("**Phương pháp Hình thang**")
-    df_trap = pd.DataFrame({
-        "xᵢ": [f"{x:.6f}" for x in X_trap],
-        "f(xᵢ)": [f"{y:.6f}" for y in Y_trap],
-        "Sai số |f(xᵢ) - f(x)|": [f"{0:.6f}" for _ in X_trap]
-    })
-    st.dataframe(df_trap, use_container_width=True)
-
-if method in ["Simpson", "Cả hai"]:
-    st.markdown("**Phương pháp Simpson**")
-    df_simp = pd.DataFrame({
-        "xᵢ": [f"{x:.6f}" for x in X_simp],
-        "f(xᵢ)": [f"{y:.6f}" for y in Y_simp],
-        "Sai số |f(xᵢ) - f(x)|": [f"{0:.6f}" for _ in X_simp]
-    })
-    st.dataframe(df_simp, use_container_width=True)
