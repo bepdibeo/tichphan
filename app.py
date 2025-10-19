@@ -6,7 +6,7 @@ import pandas as pd
 
 st.set_page_config(page_title="Tích phân gần đúng", layout="wide")
 
-st.title("So sánh hai phương pháp tính gần đúng tích phân")
+st.title("Hai phương pháp tính gần đúng tích phân")
 st.markdown("### Phương pháp Hình thang và Simpson")
 
 # HÀM CHUẨN HÓA BIỂU THỨC NGƯỜI DÙNG
@@ -208,3 +208,4 @@ if method in ["Simpson", "Cả hai"]:
     fig_simp.update_layout(
         xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig_simp, use_container_width=True)
+
