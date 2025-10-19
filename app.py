@@ -104,7 +104,7 @@ def compute_with_tolerance(f, a, b, rule_func, epsilon=None, n=None):
         I1 = rule_func(f, a, b, n)
     return I1, n
 
-# TÍNH SAI SỐ LÝ THUYẾT
+# HÀM TÍNH SAI SỐ LÝ THUYẾT
 def theoretical_error(f_expr, a, b, n, method):
     x = sp.Symbol('x')
     try:
@@ -121,8 +121,7 @@ def theoretical_error(f_expr, a, b, n, method):
     except:
         return None
 
-# TÍNH KẾT QUẢ
-
+# TÍNH SAI SỐ THỰC NGHIỆM
 I_trap = I_simp = None
 n_used_trap = n_used_simp = None
 err_trap = err_simp = None
@@ -232,7 +231,7 @@ if method in ["Simpson", "Cả hai"]:
 
     if fill_toggle:
         for i in range(0, n_used_simp, 2):
-            xs = np.linspace(X_simp[i], X_simp[i+2], 40)
+            xs = np.linspace(X_simp[i], X_simp[i+2], 60)
             coeffs = np.polyfit([X_simp[i], X_simp[i+1], X_simp[i+2]],
                                 [Y_simp[i], Y_simp[i+1], Y_simp[i+2]], 2)
             ys = np.polyval(coeffs, xs)
