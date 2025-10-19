@@ -121,7 +121,7 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 
 # Biểu đồ hội tụ sai số 
-st.subheader("📊 Biểu đồ hội tụ sai số log–log")
+st.subheader("Biểu đồ hội tụ sai số")
 
 ns = [4, 8, 16, 32, 64, 128]
 err_trap_list = [abs(trapezoidal_rule(f_lambda, a, b, ni) - I_exact) for ni in ns]
@@ -134,8 +134,9 @@ fig_err.add_trace(go.Scatter(x=np.log10(ns), y=np.log10(err_simp_list), mode="li
 fig_err.update_layout(
     xaxis_title="log10(n)",
     yaxis_title="log10(|Sai số|)",
-    title="So sánh tốc độ hội tụ sai số (log–log)",
+    title="So sánh tốc độ hội tụ sai số",
     height=500,
     legend_title="Công thức"
 )
 st.plotly_chart(fig_err, use_container_width=True)
+
