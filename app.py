@@ -208,4 +208,3 @@ if method in ["Simpson", "Cả hai"]:
     fig_simp.update_layout(
         xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig_simp, use_container_width=True)
-
