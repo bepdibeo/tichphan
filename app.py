@@ -116,7 +116,11 @@ if np.any(~np.isfinite(Y_test)):
 
 # Tính tích phân chính xác bằng SymPy (nếu được)
 try:
-    I_exact = float(sp.integrate(f_expr, (x, a, b)))
+    # Nếu hàm không phụ thuộc vào x → là hằng số
+    if not f_expr.free_symbols:
+        I_exact = float(f_expr * (b - a))
+    else:
+        I_exact = float(sp.integrate(f_expr, (x, a, b)))
 except Exception:
     I_exact = None
     st.warning("Không thể tính tích phân chính xác. Ứng dụng sẽ chỉ so sánh kết quả gần đúng nếu có thể.")
@@ -341,4 +345,5 @@ if method in ["Simpson", "Cả hai"] and n_used_simp is not None:
 
     fig_simp.update_layout(xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig_simp, use_container_width=True)
+
 
