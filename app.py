@@ -86,16 +86,21 @@ def theoretical_error(f_expr, a, b, n, method):
             return None
         f_diff_func = make_vectorized(sp.lambdify(x, f_diff, "numpy"))
         xs = np.linspace(a, b, 1000)
+        # Tính giá trị đạo hàm tuyệt đối, lọc các giá trị hợp lệ
         vals = np.abs(f_diff_func(xs))
-        vals = vals[np.isfinite(vals)]
+        vals = vals[np.isfinite(vals)]  # bỏ NaN, inf
+        # Nếu tất cả NaN thì coi như không tính được
         if vals.size == 0:
             return None
-        M = np.max(vals)
-        # Nếu đạo hàm bằng 0 trên toàn đoạn thì sai số lý thuyết = 0
-        if np.allclose(M, 0):
+        # Tính M là giá trị lớn nhất của đạo hàm bậc cao
+        M = float(np.nanmax(vals))
+        # Nếu đạo hàm bậc cao bằng 0 thì sai số lý thuyết = 0
+        if np.isclose(M, 0):
             return 0
+        # Tính sai số lý thuyết
         return ((b - a) ** k) / denom * M
-    except Exception:
+
+    except Exception as e:
         return None
 
 #  Tính toán 
@@ -174,6 +179,7 @@ if method in ["Hình thang", "Cả hai"]:
 if method in ["Simpson", "Cả hai"]:
     st.subheader("Minh họa phương pháp Simpson")
     plot_area("Simpson", np.linspace(a, b, n_s + 1), f_lambda(np.linspace(a, b, n_s + 1)), "rgba(255,215,0,0.1)", "gold")
+
 
 
 
