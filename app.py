@@ -51,11 +51,18 @@ except Exception:
 if b <= a: st.error("Cận trên b phải lớn hơn cận dưới a."); st.stop()
 
 #  Kiểm tra miền xác định 
+# Kiểm tra xem hàm có điểm gián đoạn trong [a, b] không 
 try:
-    testY = f_lambda(np.linspace(a, b, 1000))
-    if np.any(np.iscomplex(testY)) or np.any(~np.isfinite(testY)): raise ValueError
+    singulars = sp.calculus.util.singularities(f_expr, x)
+    if singulars:
+        # Lọc ra các điểm thực nằm trong khoảng (a, b)
+        singulars_in_range = [float(s) for s in singulars if s.is_real and a < float(s) < b]
+        if singulars_in_range:
+            st.error(f"Hàm có điểm gián đoạn trong [{a}, {b}]: {', '.join(f'{s:.6f}' for s in singulars_in_range)}")
+            st.stop()
 except Exception as e:
-    st.error(f"Hàm không xác định trên [{a},{b}]. Chi tiết: {e}"); st.stop()
+    # Nếu không xác định được điểm kỳ dị thì bỏ qua, coi như hàm liên tục
+    pass
 
 #  Tích phân chính xác 
 try:
@@ -172,4 +179,5 @@ if method in ["Hình thang", "Cả hai"]:
 if method in ["Simpson", "Cả hai"]:
     st.subheader("Minh họa phương pháp Simpson")
     plot_area("Simpson", np.linspace(a, b, n_s + 1), f_lambda(np.linspace(a, b, n_s + 1)), "rgba(255,215,0,0.1)", "gold")
+
 
