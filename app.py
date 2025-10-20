@@ -84,9 +84,10 @@ try:
     # Xử lý các trường hợp có e, pi
     f_expr = sp.sympify(expr_str, locals={'e': sp.E, 'pi': sp.pi})
     # Xử lý trường hợp hàm hằng
-    if not f_expr.free_symbols:
-        f_expr = sp.Lambda(x, f_expr)
-        f_lambda = lambda t: np.full_like(t, float(f_expr(x)))
+    is_constant = not f_expr.free_symbols  # ghi nhớ nếu là hằng
+    if is_constant:
+        const_val = float(f_expr)
+        f_lambda = lambda t: np.full_like(t, const_val)
     else:
         f_lambda = sp.lambdify(x, f_expr, "numpy")
 except Exception as e:
@@ -116,15 +117,14 @@ if np.any(~np.isfinite(Y_test)):
 
 # Tính tích phân chính xác bằng SymPy (nếu được)
 try:
-    # Nếu hàm không phụ thuộc vào x → là hằng số
-    if not f_expr.free_symbols:
-        I_exact = float(f_expr * (b - a))
+    if is_constant:
+        I_exact = float(const_val * (b - a))
     else:
         I_exact = float(sp.integrate(f_expr, (x, a, b)))
 except Exception:
     I_exact = None
     st.warning("Không thể tính tích phân chính xác. Ứng dụng sẽ chỉ so sánh kết quả gần đúng nếu có thể.")
-
+    
 # Hàm tính theo sai số hoặc theo n 
 def compute_with_tolerance(f, a, b, rule_func, epsilon=None, n=None):
     prev = None
@@ -345,5 +345,6 @@ if method in ["Simpson", "Cả hai"] and n_used_simp is not None:
 
     fig_simp.update_layout(xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig_simp, use_container_width=True)
+
 
 
