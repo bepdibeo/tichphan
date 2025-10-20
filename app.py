@@ -339,7 +339,7 @@ if method in ["Simpson", "Cả hai"] and n_used_simp is not None:
 
     fig_simp.add_trace(go.Scatter(
         x=X_simp, y=Y_simp,
-        mode="lines+markers",
+        mode="markers",
         name="Các điểm chia",
         line=dict(color="red", dash="dot")))
 
