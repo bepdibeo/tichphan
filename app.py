@@ -16,12 +16,16 @@ def make_vectorized(f_lambda):  #
     return lambda x_arr: np.full_like(x_arr, float(f_lambda(0))) if np.isscalar(f_lambda(0)) else np.asarray(f_lambda(x_arr), dtype=float)
 
 def trapezoidal_rule(f, a, b, n):
-    x = np.linspace(a, b, n + 1); y = f(x); h = (b - a) / n
+    x = np.linspace(a, b, n + 1) 
+    y = f(x) 
+    h = (b - a) / n
     return h * (y[0]/2 + np.sum(y[1:-1]) + y[-1]/2)
 
 def simpson_rule(f, a, b, n):
     if n % 2: n += 1
-    x = np.linspace(a, b, n + 1); y = f(x); h = (b - a) / n
+    x = np.linspace(a, b, n + 1) 
+    y = f(x) 
+    h = (b - a) / n
     return (h/3)*(y[0] + y[-1] + 4*np.sum(y[1:-1:2]) + 2*np.sum(y[2:-2:2]))
 
 #  Giao diện nhập 
@@ -50,18 +54,18 @@ except Exception:
 
 if b <= a: st.error("Cận trên b phải lớn hơn cận dưới a."); st.stop()
 
-#  Kiểm tra miền xác định 
-try:
-    testY = f_lambda(np.linspace(a, b, 400))
-    if np.any(np.iscomplex(testY)) or np.any(~np.isfinite(testY)): raise ValueError
-except Exception as e:
-    st.error(f"Hàm không xác định trên [{a},{b}]. Chi tiết: {e}"); st.stop()
-
-#  Tích phân chính xác 
+#  Tích phân chính xác
 try:
     I_exact = float(f_expr * (b - a)) if is_const else float(sp.integrate(f_expr, (x, a, b)))
 except Exception:
-    I_exact = None; st.warning("Không thể tính tích phân chính xác. Sẽ chỉ tính gần đúng.")
+    I_exact = None
+
+# Kiểm tra I_exact có hợp lệ không
+if I_exact is None or not np.isfinite(I_exact):
+    st.subheader("Kết quả")
+    st.metric("Tích phân chính xác", "—" if I_exact is None else str(I_exact))
+    st.warning("Tích phân chính xác không tính được hoặc lỗi số học. Không tính tích phân gần đúng.")
+    st.stop()  # dừng app, không đi tiếp phần bảng giá trị hay đồ thị
 
 #  Hàm tính 
 def compute_with_tolerance(f, a, b, rule, epsilon=None, n=None):
