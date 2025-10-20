@@ -39,10 +39,34 @@ def simpson_rule(f, a, b, n):
 # NHẬP LIỆU
 col1, col2 = st.columns(2)
 with col1:
-    expr_input = st.text_input("Nhập hàm f(x):", "x**2")
+    # Khởi tạo session_state để giữ giá trị hàm
+    if 'expr_text' not in st.session_state:
+        st.session_state['expr_text'] = "x**2"
+    # Text input
+    expr_str = st.text_input("Nhập hàm f(x):", value=st.session_state['expr_text'])
+    st.session_state['expr_text'] = expr_str
+    # Bàn phím toán học
+    st.markdown("**Bàn phím toán học:**")
+    col1_btn, col2_btn, col3_btn, col4_btn = st.columns(4)
+
+    with col1_btn:
+        if st.button("π"): expr_str += "pi"
+        if st.button("e"): expr_str += "e"
+    with col2_btn:
+        if st.button("√"): expr_str += "sqrt("
+        if st.button("^"): expr_str += "**"
+    with col3_btn:
+        if st.button("sin"): expr_str += "sin("
+        if st.button("cos"): expr_str += "cos("
+    with col4_btn:
+        if st.button("ln"): expr_str += "log("
+        if st.button("exp"): expr_str += "exp("
+    # Lấy giá trị cập nhật từ session_state
+    expr_str = st.session_state['expr_text']
+
     a = st.number_input("Cận dưới a:", value=0.0)
     b = st.number_input("Cận trên b:", value=1.0)
-
+   
 with col2:
     method = st.radio("Chọn phương pháp:", ["Hình thang", "Simpson", "Cả hai"])
     mode = st.radio("Chọn cách nhập:", ["Nhập số khoảng n", "Nhập sai số ε"])
@@ -58,8 +82,7 @@ x = sp.Symbol('x')
 expr_str = normalize_expr(expr_input)
 
 try:
-    # Hỗ trợ exp và hằng số e
-    f_expr = sp.sympify(expr_str, locals={'e': sp.E, 'sp': sp})
+    f_expr = sp.sympify(expr_str, locals={'e': sp.E, 'pi': sp.pi})
     f_lambda = sp.lambdify(x, f_expr, "numpy")
 except Exception as e:
     st.error("Cú pháp hàm không hợp lệ. Ví dụ: sin(x), exp(x), x**2, log(x), ...")
@@ -253,6 +276,7 @@ if method in ["Simpson", "Cả hai"]:
     fig_simp.update_layout(
         xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig_simp, use_container_width=True)
+
 
 
 
