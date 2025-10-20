@@ -52,7 +52,7 @@ if b <= a: st.error("Cận trên b phải lớn hơn cận dưới a."); st.stop
 
 #  Kiểm tra miền xác định 
 try:
-    testY = f_lambda(np.linspace(a, b, 400))
+    testY = f_lambda(np.linspace(a, b, 1000))
     if np.any(np.iscomplex(testY)) or np.any(~np.isfinite(testY)): raise ValueError
 except Exception as e:
     st.error(f"Hàm không xác định trên [{a},{b}]. Chi tiết: {e}"); st.stop()
@@ -172,3 +172,4 @@ if method in ["Hình thang", "Cả hai"]:
 if method in ["Simpson", "Cả hai"]:
     st.subheader("Minh họa phương pháp Simpson")
     plot_area("Simpson", np.linspace(a, b, n_s + 1), f_lambda(np.linspace(a, b, n_s + 1)), "rgba(255,215,0,0.1)", "gold")
+
