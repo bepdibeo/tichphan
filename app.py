@@ -9,6 +9,18 @@ st.set_page_config(page_title="Tích phân gần đúng", layout="wide")
 st.title("Hai phương pháp tính gần đúng tích phân")
 st.markdown("### Phương pháp Hình thang và Simpson")
 
+# HÀM CHUẨN HÓA BIỂU THỨC NGƯỜI DÙNG
+def normalize_expr(expr_str):
+    expr_str = expr_str.lower()
+    replacements = {
+        '^': '**',
+        'ln': 'log',
+        '√': 'sqrt'
+    }
+    for k, v in replacements.items():
+        expr_str = expr_str.replace(k, v)
+    return expr_str
+
 # HAI CÔNG THỨC TÍNH TÍCH PHÂN
 def trapezoidal_rule(f, a, b, n):
     x = np.linspace(a, b, n + 1)
@@ -41,18 +53,6 @@ with col2:
     else:
         epsilon = st.number_input("Sai số ε:", min_value=1e-8, value=1e-4, format="%.1e")
         n = None
-
-# HÀM CHUẨN HÓA BIỂU THỨC NGƯỜI DÙNG
-def normalize_expr(expr_str):
-    expr_str = expr_str.lower()
-    replacements = {
-        '^': '**',
-        'ln': 'log',
-        '√': 'sqrt'
-    }
-    for k, v in replacements.items():
-        expr_str = expr_str.replace(k, v)
-    return expr_str
 
 # XỬ LÝ BIỂU THỨC NGƯỜI DÙNG
 x = sp.Symbol('x')
@@ -277,3 +277,4 @@ if method in ["Simpson", "Cả hai"]:
     fig_simp.update_layout(
         xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig_simp, use_container_width=True)
+
