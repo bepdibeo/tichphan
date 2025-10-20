@@ -55,37 +55,8 @@ except Exception:
     st.error("Cú pháp hàm không hợp lệ. Ví dụ: sin(x), exp(x), x**2, log(x), ...")
     st.stop()
 
-if b <= a: st.error("Cận trên b phải lớn hơn cận dưới a."); st.stop()
-
-# --- Kiểm tra miền xác định numeric an toàn ---
-N_TEST = 5000
-JUMP_TOL = 1e5
-def check_singularities_numeric(f, a, b, n_test=N_TEST, jump_tol=JUMP_TOL):
-    X = np.linspace(a, b, max(2, n_test))
-    try:
-        Y = np.asarray(f(X), dtype=float)
-    except Exception:
-        return True, np.array([a])
-    
-    mask_naninf = np.isnan(Y) | np.isinf(Y)
-    if np.any(mask_naninf):
-        return True, X[mask_naninf]
-    
-    if len(Y) > 1:
-        jumps = np.abs(np.diff(Y))
-        mask_jump = jumps > jump_tol
-        if np.any(mask_jump):
-            idx = np.where(mask_jump)[0]
-            return True, (X[idx] + X[idx+1])/2
-    return False, np.array([])
-
-has_sing, bad_pts = check_singularities_numeric(f_lambda, a, b)
-if has_sing:
-    st.error(
-        f"Hàm có điểm gián đoạn / không xác định trong [{a},{b}]: "
-        f"{', '.join(f'{p:.6f}' for p in bad_pts[:10])}"
-        + ("..." if len(bad_pts) > 10 else "")
-    )
+if b <= a:
+    st.error("Cận trên b phải lớn hơn cận dưới a.")
     st.stop()
 
 # --- Tích phân chính xác ---
@@ -93,18 +64,22 @@ try:
     I_exact = float(f_expr * (b - a)) if is_const else float(sp.integrate(f_expr, (x, a, b)))
 except Exception:
     I_exact = None
-    st.warning("Không thể tính tích phân chính xác. Sẽ chỉ tính gần đúng.")
+    st.warning("Không thể tính tích phân chính xác bằng SymPy. Các tích phân gần đúng sẽ hiển thị cùng giá trị SymPy nếu lỗi xảy ra.")
 
 # --- Hàm tính ---
-def compute_with_tolerance(f, a, b, rule, epsilon=None, n=None):
+def compute_with_tolerance(f, a, b, rule, epsilon=None, n=None, fallback=None):
+    if fallback is not None:
+        return fallback, n or 1
     prev, n = None, 2 if epsilon else n
     while True:
         I = rule(f, a, b, n)
-        if epsilon is None or (prev is not None and abs(I - prev) < epsilon):
+        if epsilon is None or (prev and abs(I - prev) < epsilon):
             return I, n
         prev, n = I, n*2
-        if n > 1e7: raise RuntimeError("Không hội tụ. Hãy tăng ε.")
+        if n > 1e7:
+            raise RuntimeError("Không hội tụ. Hãy tăng ε.")
 
+# --- Hàm sai số lý thuyết ---
 def theoretical_error(f_expr, a, b, n, method):
     try:
         grid = np.linspace(a, b, 1000)
@@ -127,20 +102,21 @@ def theoretical_error(f_expr, a, b, n, method):
     except Exception:
         return None
 
-# --- Tính toán ---
+# --- Tính toán kết quả ---
 n_user = int(max(1, n_input or 1))
 if method in ["Simpson", "Cả hai"] and n_user % 2:
     st.warning(f"Simpson yêu cầu n chẵn — đã đổi {n_user}→{n_user+1}")
     n_user += 1
 
 I_trap = I_simp = err_trap = err_simp = None
+fallback_value = I_exact if I_exact is None or np.isnan(I_exact) or np.isinf(I_exact) else None
 
 if method in ["Hình thang", "Cả hai"]:
-    I_trap, n_t = compute_with_tolerance(f_lambda, a, b, trapezoidal_rule, epsilon, n_user)
-    err_trap = abs(I_trap - I_exact) if I_exact else None
+    I_trap, n_t = compute_with_tolerance(f_lambda, a, b, trapezoidal_rule, epsilon, n_user, fallback=fallback_value)
+    err_trap = abs(I_trap - I_exact) if I_exact and not fallback_value else None
 if method in ["Simpson", "Cả hai"]:
-    I_simp, n_s = compute_with_tolerance(f_lambda, a, b, simpson_rule, epsilon, n_user)
-    err_simp = abs(I_simp - I_exact) if I_exact else None
+    I_simp, n_s = compute_with_tolerance(f_lambda, a, b, simpson_rule, epsilon, n_user, fallback=fallback_value)
+    err_simp = abs(I_simp - I_exact) if I_exact and not fallback_value else None
 
 # --- Hiển thị kết quả ---
 st.subheader("Kết quả")
@@ -151,12 +127,12 @@ def show_result(col, title, I, n, err, method):
     e_theory = theoretical_error(f_expr, a, b, n, method)
     note = (f"Sai số [Thực: {err:.3g} " if err is not None else "") + \
            (f"| Lý thuyết: {e_theory:.3g}]" if e_theory is not None else "")
-    col.metric(f"{title} (n={n})", f"{I:.6f}", note)
+    col.metric(f"{title} (n={n})", f"{I:.6f}" if I is not None else "—", note)
 
 if I_trap is not None: show_result(cols[1], "Hình thang", I_trap, n_t, err_trap, "Hình thang")
 if I_simp is not None: show_result(cols[2], "Simpson", I_simp, n_s, err_simp, "Simpson")
 
-# --- Bảng giá trị chi tiết ---
+# --- Bảng giá trị ---
 st.subheader("Bảng giá trị chi tiết")
 def make_table(xv, yv, w, h, title, coef):
     df = pd.DataFrame({"i": range(len(xv)), "x_i": xv, "f(x_i)": yv, "Trọng số": w, "Trọng số × f(x_i)": w*yv})
@@ -165,16 +141,11 @@ def make_table(xv, yv, w, h, title, coef):
     st.latex(rf"\sum w_i f(x_i) = {np.sum(w*yv):.6f},\ I \approx {coef} \times {np.sum(w*yv):.6f} = {h*np.sum(w*yv):.6f}")
 
 if method in ["Hình thang", "Cả hai"]:
-    X = np.linspace(a, b, n_t + 1)
-    Y = f_lambda(X)
-    W = np.ones_like(X)
-    W[1:-1] = 2
-    h = (b - a) / n_t
+    X = np.linspace(a, b, n_t + 1); Y = f_lambda(X)
+    W = np.ones_like(X); W[1:-1] = 2; h = (b - a) / n_t
     make_table(X, Y, W, h/2, "Phương pháp Hình thang", "h/2")
-
 if method in ["Simpson", "Cả hai"]:
-    X = np.linspace(a, b, n_s + 1)
-    Y = f_lambda(X)
+    X = np.linspace(a, b, n_s + 1); Y = f_lambda(X)
     W = np.array([1 if i in [0,len(X)-1] else 4 if i%2 else 2 for i in range(len(X))])
     h = (b - a) / n_s
     make_table(X, Y, W, h/3, "Phương pháp Simpson (1/3)", "h/3")
