@@ -72,19 +72,30 @@ def compute_with_tolerance(f, a, b, rule, epsilon=None, n=None):
         prev, n = I, n*2
         if n > 1e7: raise RuntimeError("Không hội tụ. Hãy tăng ε.")
 
-def theoretical_error(f_expr, a, b, n, method): 
-    try: 
-        if method == "Hình thang": 
-            f2 = sp.diff(f_expr, x, 2) 
-            f2_vec = make_vectorized(sp.lambdify(x, f2, "numpy")) 
-            M2 = np.max(np.abs(f2_vec(np.linspace(a, b, 1000)))) 
-            return ((b - a)**3) / (12 * n**2) * M2 
-        elif method == "Simpson": 
-            f4 = sp.diff(f_expr, x, 4) 
-            f4_vec = make_vectorized(sp.lambdify(x, f4, "numpy")) 
-            M4 = np.max(np.abs(f4_vec(np.linspace(a, b, 1000)))) 
-            return ((b - a)**5) / (180 * n**4) * M4 
-    except Exception: 
+def theoretical_error(f_expr, a, b, n, method):
+    try:
+        if method == "Hình thang":
+            f_diff = sp.diff(f_expr, x, 2)
+            k = 3
+            denom = 12 * n**2
+        elif method == "Simpson":
+            f_diff = sp.diff(f_expr, x, 4)
+            k = 5
+            denom = 180 * n**4
+        else:
+            return None
+        f_diff_func = make_vectorized(sp.lambdify(x, f_diff, "numpy"))
+        xs = np.linspace(a, b, 1000)
+        vals = np.abs(f_diff_func(xs))
+        vals = vals[np.isfinite(vals)]
+        if vals.size == 0:
+            return None
+        M = np.max(vals)
+        # Nếu đạo hàm bằng 0 trên toàn đoạn thì sai số lý thuyết = 0
+        if np.allclose(M, 0):
+            return 0
+        return ((b - a) ** k) / denom * M
+    except Exception:
         return None
 
 #  Tính toán 
@@ -163,6 +174,7 @@ if method in ["Hình thang", "Cả hai"]:
 if method in ["Simpson", "Cả hai"]:
     st.subheader("Minh họa phương pháp Simpson")
     plot_area("Simpson", np.linspace(a, b, n_s + 1), f_lambda(np.linspace(a, b, n_s + 1)), "rgba(255,215,0,0.1)", "gold")
+
 
 
 
