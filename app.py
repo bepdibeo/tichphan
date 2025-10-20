@@ -115,7 +115,7 @@ cols[0].metric("Tích phân chính xác", f"{I_exact:.6f}" if I_exact else "—"
 
 def show_result(col, title, I, n, err, method):
     e_theory = theoretical_error(f_expr, a, b, n, method)
-    note = (f"Thực: {err:.3g} " if err else "") + (f"| Lý thuyết: {e_theory:.3g}" if e_theory else "")
+    note = (f"Sai số [Thực: {err:.3g} " if err else "") + (f"| Lý thuyết: {e_theory:.3g}]" if e_theory else "")
     col.metric(f"{title} (n={n})", f"{I:.6f}", note)
 
 if I_trap is not None: show_result(cols[1], "Hình thang", I_trap, n_t, err_trap, "Hình thang")
@@ -172,4 +172,3 @@ if method in ["Hình thang", "Cả hai"]:
 if method in ["Simpson", "Cả hai"]:
     st.subheader("Minh họa phương pháp Simpson")
     plot_area("Simpson", np.linspace(a, b, n_s + 1), f_lambda(np.linspace(a, b, n_s + 1)), "rgba(255,215,0,0.1)", "gold")
-
