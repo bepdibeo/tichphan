@@ -9,15 +9,6 @@ st.set_page_config(page_title="Tích phân gần đúng", layout="wide")
 st.title("Hai phương pháp tính gần đúng tích phân")
 st.markdown("### Phương pháp Hình thang và Simpson")
 
-# HÀM CHUẨN HÓA BIỂU THỨC NGƯỜI DÙNG
-def normalize_expr(expr_str):
-    expr_str = expr_str.lower()
-    replacements = {'^': '**', 'ln': 'log', '√': 'sqrt', 'e': 'E'}
-    for k, v in replacements.items():
-        expr_str = expr_str.replace(k, v)
-    return expr_str
-
-
 # HAI CÔNG THỨC TÍNH TÍCH PHÂN
 def trapezoidal_rule(f, a, b, n):
     x = np.linspace(a, b, n + 1)
@@ -51,42 +42,71 @@ with col2:
         epsilon = st.number_input("Sai số ε:", min_value=1e-8, value=1e-4, format="%.1e")
         n = None
 
-# XỬ LÝ HÀM NGƯỜI DÙNG
+# HÀM CHUẨN HÓA BIỂU THỨC NGƯỜI DÙNG
+def normalize_expr(expr_str):
+    expr_str = expr_str.lower()
+    replacements = {
+        '^': '**',
+        'ln': 'log',
+        '√': 'sqrt'
+    }
+    for k, v in replacements.items():
+        expr_str = expr_str.replace(k, v)
+    return expr_str
+
+# XỬ LÝ BIỂU THỨC NGƯỜI DÙNG
 x = sp.Symbol('x')
 
-# Bước 1: Kiểm tra cú pháp biểu thức 
+# Bước 1: Chuẩn hóa và kiểm tra cú pháp
+expr_str = st.text_input("Nhập hàm f(x):", "x**2")
+expr_str = normalize_expr(expr_str)
+
 try:
-    f_expr = sp.sympify(expr_str)
-    f_lambda = sp.lambdify(x, f_expr, "numpy")
+    f_expr = sp.sympify(expr_str, locals={'e': sp.E})  # Nếu viết 'e' thì chuyển thành E: hằng số Napier
+    f_lambda = sp.lambdify(x, f_expr, "numpy")         # Hàm số dùng NumPy
 except Exception as e:
-    st.error("Cú pháp hàm không hợp lệ. Hãy kiểm tra lại (ví dụ: sin(x), e**x, x**2, log(x), ...)")
+    st.error(
+        "Cú pháp hàm không hợp lệ. Hãy kiểm tra lại (ví dụ: sin(x), exp(x), x**2, log(x), ...)"
+    )
     st.stop()
 
-# Bước 2: Kiểm tra miền xác định trên đoạn [a, b] 
+# Bước 2: Kiểm tra miền xác định trên đoạn [a, b]
+a = st.number_input("Cận dưới a:", value=0.0)
+b = st.number_input("Cận trên b:", value=1.0)
+
 X_test = np.linspace(a, b, 400)
 try:
     Y_test = f_lambda(X_test)
 except Exception as e:
-    st.error(f"Lỗi khi tính giá trị hàm trên đoạn [{a}, {b}]. Có thể hàm không xác định tại một số điểm.\n\nChi tiết: {e}")
+    st.error(
+        f"Lỗi khi tính giá trị hàm trên đoạn [{a}, {b}]. "
+        f"Có thể hàm không xác định tại một số điểm.\n\nChi tiết: {e}"
+    )
     st.stop()
 
-# Bước 3: Kiểm tra giá trị phức, vô hạn, hoặc NaN 
+# Bước 3: Kiểm tra giá trị phức, vô hạn hoặc NaN
 if np.any(np.iscomplex(Y_test)):
-    st.error("Hàm trả về giá trị phức trên đoạn tích phân. "
-             "Vui lòng chọn khoảng không chứa điểm khiến mẫu số âm hoặc căn của số âm.")
+    st.error(
+        "Hàm trả về giá trị phức trên đoạn tích phân. "
+        "Vui lòng chọn khoảng không chứa mẫu số âm hoặc căn của số âm."
+    )
     st.stop()
 
 if np.any(~np.isfinite(Y_test)):
-    st.error("Hàm có giá trị vô hạn hoặc không xác định (inf / nan) trong khoảng tích phân.\n"
-             "Vui lòng chọn đoạn không chứa tiệm cận hoặc điểm kỳ dị.")
+    st.error(
+        "Hàm có giá trị vô hạn hoặc không xác định (inf / nan) trong khoảng tích phân.\n"
+        "Vui lòng chọn đoạn không chứa tiệm cận hoặc điểm kỳ dị."
+    )
     st.stop()
 
-# Bước 4: Tính tích phân chính xác (nếu có thể) 
+# Bước 4: Tính tích phân chính xác (nếu có thể)
 try:
     I_exact = float(sp.integrate(f_expr, (x, a, b)))
 except Exception:
-    st.warning("Không thể tính chính xác tích phân biểu tượng cho hàm này. "
-               "Hệ thống sẽ chỉ so sánh kết quả gần đúng.")
+    st.warning(
+        "Không thể tính tích phân chính xác cho hàm này. "
+        "Hệ thống sẽ chỉ so sánh kết quả gần đúng."
+    )
     I_exact = None
 
 # HÀM TÍNH THEO SAI SỐ HOẶC SỐ KHOẢNG
@@ -229,9 +249,9 @@ if method in ["Simpson", "Cả hai"]:
     fig_simp.add_trace(go.Scatter(
         x=xx, y=yy, mode="lines", name="f(x)", line=dict(color="blue")))
 
-    if fill_toggle:
+    if fill_toggle: 
         for i in range(0, n_used_simp, 2):
-            xs = np.linspace(X_simp[i], X_simp[i+2], 60)
+            xs = np.linspace(X_simp[i], X_simp[i+2], 80)
             coeffs = np.polyfit([X_simp[i], X_simp[i+1], X_simp[i+2]],
                                 [Y_simp[i], Y_simp[i+1], Y_simp[i+2]], 2)
             ys = np.polyval(coeffs, xs)
@@ -242,7 +262,7 @@ if method in ["Simpson", "Cả hai"]:
                 fill="toself", fillcolor="rgba(0,255,0,0.25)",
                 line=dict(color="rgba(0,255,0,0.2)"), showlegend=False))
             
-            # Cung parabol nội suy 
+            # Vẽ cung parabol nội suy ở đồ thị Simpson
             fig_simp.add_trace(go.Scatter(
                 x=xs, y=ys, mode="lines",
                 name="Cung parabol nội suy" if i == 0 else None,
