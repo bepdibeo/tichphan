@@ -165,7 +165,7 @@ if I_simp is not None:
         note_simp += f" | Lý thuyết: {e_simp_theory:.3g}"
     cols[2].metric(f"Simpson (n={n_s})", f"{I_simp:.6f}", note_simp)
 
-# So sánh chuyển lên ngay sau kết quả
+# So sánh hai phương pháp
 if method == "Cả hai" and I_trap is not None and I_simp is not None:
     st.markdown("### So sánh hai phương pháp")
 
@@ -177,7 +177,7 @@ if method == "Cả hai" and I_trap is not None and I_simp is not None:
         err_simp_exact = abs(I_simp - I_exact)
         better = "Simpson" if err_simp_exact < err_trap_exact else "Hình thang"
         st.success(
-            f"- **Phương pháp {better} cho độ chính xác cao hơn.**  "
+            f"**Phương pháp {better} cho độ chính xác cao hơn.**  "
             f"(Sai số Simpson = {err_simp_exact:.3g}, Hình thang = {err_trap_exact:.3g})"
         )
     else:
@@ -299,3 +299,4 @@ if method in ["Simpson", "Cả hai"]:
     fig.add_trace(go.Scatter(x=X, y=Y, mode="markers", name="Các điểm chia", line=dict(color="red", dash="dot")))
     fig.update_layout(xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig, use_container_width=True)
+
