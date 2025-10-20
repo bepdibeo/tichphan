@@ -8,7 +8,7 @@ st.set_page_config(page_title="Tích phân gần đúng", layout="wide")
 st.title("Hai phương pháp tính gần đúng tích phân")
 st.markdown("### Phương pháp Hình thang và Simpson")
 
-# --- HÀM CHUẨN HÓA BIỂU THỨC NGƯỜI DÙNG ---
+# HÀM CHUẨN HÓA BIỂU THỨC NGƯỜI DÙNG
 def normalize_expr(expr_str):
     expr_str = expr_str.lower()
     replacements = {
@@ -21,7 +21,7 @@ def normalize_expr(expr_str):
         expr_str = expr_str.replace(k, v)
     return expr_str
 
-# --- HAI PHƯƠNG PHÁP TÍNH TÍCH PHÂN ---
+# HAI PHƯƠNG PHÁP TÍNH TÍCH PHÂN
 def trapezoidal_rule(f, a, b, n):
     x = np.linspace(a, b, n + 1)
     y = f(x)
@@ -36,7 +36,7 @@ def simpson_rule(f, a, b, n):
     h = (b - a) / n
     return (h/3)*(y[0] + y[-1] + 4*np.sum(y[1:-1:2]) + 2*np.sum(y[2:-2:2]))
 
-# --- NHẬP LIỆU ---
+# NHẬP LIỆU
 col1, col2 = st.columns(2)
 with col1:
     expr_input = st.text_input("Nhập hàm f(x):", "x**2")
@@ -53,7 +53,7 @@ with col2:
         epsilon = st.number_input("Sai số ε:", min_value=1e-8, value=1e-4, format="%.1e")
         n_input = None
 
-# --- XỬ LÝ BIỂU THỨC ---
+# XỬ LÝ BIỂU THỨC 
 x = sp.Symbol('x')
 expr_str = normalize_expr(expr_input)
 
@@ -65,7 +65,7 @@ except Exception as e:
     st.error("Cú pháp hàm không hợp lệ. Ví dụ: sin(x), exp(x), x**2, log(x), ...")
     st.stop()
 
-# --- KIỂM TRA MIỀN XÁC ĐỊNH ---
+# KIỂM TRA MIỀN XÁC ĐỊNH 
 X_test = np.linspace(a, b, 400)
 try:
     Y_test = f_lambda(X_test)
@@ -80,14 +80,14 @@ if np.any(~np.isfinite(Y_test)):
     st.error("Hàm có giá trị vô hạn hoặc NaN trong khoảng tích phân.")
     st.stop()
 
-# --- TÍNH TÍCH PHÂN CHÍNH XÁC ---
+# TÍNH TÍCH PHÂN CHÍNH XÁC 
 try:
     I_exact = float(sp.integrate(f_expr, (x, a, b)))
 except Exception:
     st.warning("Không thể tính tích phân chính xác, chỉ hiển thị kết quả gần đúng.")
     I_exact = None
 
-# --- HÀM TÍNH SAI SỐ HOẶC SỐ KHOẢNG ---
+# HÀM TÍNH SAI SỐ HOẶC SỐ KHOẢNG 
 def compute_with_tolerance(f, a, b, rule_func, epsilon=None, n=None):
     prev = None
     if epsilon is not None:
@@ -102,7 +102,7 @@ def compute_with_tolerance(f, a, b, rule_func, epsilon=None, n=None):
         I1 = rule_func(f, a, b, n)
     return I1, n
 
-# --- HÀM TÍNH SAI SỐ LÝ THUYẾT ---
+# HÀM TÍNH SAI SỐ LÝ THUYẾT 
 def theoretical_error(f_expr, a, b, n, method):
     try:
         if method == "Hình thang":
@@ -118,7 +118,7 @@ def theoretical_error(f_expr, a, b, n, method):
     except:
         return None
 
-# --- TÍNH SAI SỐ THỰC NGHIỆM ---
+# TÍNH SAI SỐ THỰC NGHIỆM 
 I_trap = I_simp = None
 n_used_trap = n_used_simp = None
 err_trap = err_simp = None
@@ -130,7 +130,7 @@ if method in ["Simpson", "Cả hai"]:
     I_simp, n_used_simp = compute_with_tolerance(f_lambda, a, b, simpson_rule, epsilon, n_input)
     err_simp = abs(I_simp - I_exact) if I_exact is not None else None
 
-# --- HIỂN THỊ KẾT QUẢ ---
+# HIỂN THỊ KẾT QUẢ 
 st.subheader("Kết quả")
 cols = st.columns(3)
 cols[0].metric("Tích phân chính xác", f"{I_exact:.6f}" if I_exact is not None else "—")
@@ -253,5 +253,6 @@ if method in ["Simpson", "Cả hai"]:
     fig_simp.update_layout(
         xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig_simp, use_container_width=True)
+
 
 
