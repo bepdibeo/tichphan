@@ -74,33 +74,26 @@ def compute_with_tolerance(f, a, b, rule, epsilon=None, n=None):
 
 def theoretical_error(f_expr, a, b, n, method):
     try:
+        grid = np.linspace(a, b, 1000)
         if method == "Hình thang":
-            f_diff = sp.diff(f_expr, x, 2)
-            k = 3
-            denom = 12 * n**2
+            f2 = sp.diff(f_expr, x, 2)
+            f2_func = sp.lambdify(x, f2, "numpy")
+            vals = np.abs(f2_func(grid))
+            vals = vals[np.isfinite(vals)]  # loại bỏ NaN, inf
+            if len(vals) == 0:
+                return None
+            M2 = np.max(vals)
+            return ((b - a)**3) / (12 * n**2) * M2
         elif method == "Simpson":
-            f_diff = sp.diff(f_expr, x, 4)
-            k = 5
-            denom = 180 * n**4
-        else:
-            return None
-        f_diff_func = make_vectorized(sp.lambdify(x, f_diff, "numpy"))
-        xs = np.linspace(a, b, 1000)
-        # Tính giá trị đạo hàm tuyệt đối, lọc các giá trị hợp lệ
-        vals = np.abs(f_diff_func(xs))
-        vals = vals[np.isfinite(vals)]  # bỏ NaN, inf
-        # Nếu tất cả NaN thì coi như không tính được
-        if vals.size == 0:
-            return None
-        # Tính M là giá trị lớn nhất của đạo hàm bậc cao
-        M = float(np.nanmax(vals))
-        # Nếu đạo hàm bậc cao bằng 0 thì sai số lý thuyết = 0
-        if np.isclose(M, 0):
-            return 0
-        # Tính sai số lý thuyết
-        return ((b - a) ** k) / denom * M
-
-    except Exception as e:
+            f4 = sp.diff(f_expr, x, 4)
+            f4_func = sp.lambdify(x, f4, "numpy")
+            vals = np.abs(f4_func(grid))
+            vals = vals[np.isfinite(vals)]
+            if len(vals) == 0:
+                return None
+            M4 = np.max(vals)
+            return ((b - a)**5) / (180 * n**4) * M4
+    except Exception:
         return None
 
 #  Tính toán 
@@ -179,3 +172,4 @@ if method in ["Hình thang", "Cả hai"]:
 if method in ["Simpson", "Cả hai"]:
     st.subheader("Minh họa phương pháp Simpson")
     plot_area("Simpson", np.linspace(a, b, n_s + 1), f_lambda(np.linspace(a, b, n_s + 1)), "rgba(255,215,0,0.1)", "gold")
+
