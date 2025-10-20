@@ -155,6 +155,96 @@ if I_simp is not None:
     e_simp_theory = theoretical_error(f_expr, a, b, n_s, "Simpson")
     cols[2].metric(f"Simpson (n={n_s})", f"{I_simp:.6f}", f"Sai số: {err_simp:.3g}" if err_simp else "")
 
+# Hiển thị bảng giá trị chi tiết cho từng phương pháp 
+st.subheader("Bảng giá trị chi tiết cho từng phương pháp")
+def make_table_with_formula(x_vals, y_vals, weights, h, title, coef_text, coef_display):
+    weighted_fx = weights * y_vals
+    df = pd.DataFrame({
+        "i": np.arange(len(x_vals)),
+        "x_i": x_vals,
+        "f(x_i)": y_vals,
+        "Trọng số": weights,
+        "Trọng số × f(x_i)": weighted_fx
+    })
+    total_sum = weighted_fx.sum()
+    result = h * total_sum
+    df.loc["Tổng"] = ["", "", "", "∑", total_sum]
+
+    st.markdown(f"#### ➤ {title}")
+    st.dataframe(
+        df.style.format({
+            "x_i": "{:.6f}",
+            "f(x_i)": "{:.6f}",
+            "Trọng số": "{:.0f}",
+            "Trọng số × f(x_i)": "{:.6f}"
+        }),
+        use_container_width=True
+    )
+
+    st.latex(rf"I \approx {coef_display} \times {total_sum:.6f} = {result:.6f}")
+    return result
+
+# --- Hình thang ---
+I_trap_table = None
+if method in ["Hình thang", "Cả hai"]:
+    X_trap = np.linspace(a, b, n_t + 1)
+    Y_trap = f_lambda(X_trap)
+    W_trap = np.ones(len(X_trap))
+    W_trap[0] = W_trap[-1] = 1
+    W_trap[1:-1] = 2
+    h_trap = (b - a) / n_t
+    I_trap_table = make_table_with_formula(X_trap, Y_trap, W_trap, h_trap / 2, 
+                                           "Phương pháp Hình thang", "h/2", r"\frac{h}{2}")
+
+# --- Simpson ---
+I_simp_table = None
+if method in ["Simpson", "Cả hai"]:
+    X_simp = np.linspace(a, b, n_s + 1)
+    Y_simp = f_lambda(X_simp)
+    W_simp = np.ones(len(X_simp))
+    for i in range(1, len(W_simp) - 1):
+        W_simp[i] = 4 if i % 2 == 1 else 2
+    h_simp = (b - a) / n_s
+    I_simp_table = make_table_with_formula(X_simp, Y_simp, W_simp, h_simp / 3, 
+                                           "Phương pháp Simpson (1/3)", "h/3", r"\frac{h}{3}")
+
+# --- So sánh tổng hợp nếu chọn cả hai ---
+if method == "Cả hai" and I_trap_table is not None and I_simp_table is not None:
+    st.markdown("### 🔍 So sánh tổng hợp hai phương pháp")
+
+    diff_abs = abs(I_simp_table - I_trap_table)
+    diff_percent = (diff_abs / abs(I_simp_table)) * 100 if I_simp_table != 0 else None
+
+    if I_exact is not None:
+        err_trap_exact = abs(I_trap_table - I_exact)
+        err_simp_exact = abs(I_simp_table - I_exact)
+        better = "Simpson" if err_simp_exact < err_trap_exact else "Hình thang"
+        st.success(
+            f"""
+            - **Phương pháp {better} cho độ chính xác cao hơn.**  
+            """
+        )
+    else:
+        st.info(
+            f"""
+            - Chênh lệch tuyệt đối giữa hai phương pháp: {diff_abs:.6e}  
+            - Sai khác tương đối: {diff_percent:.3f}%  
+            """
+        )
+
+# Tạo bảng dữ liệu
+table_data = pd.DataFrame({
+    "i": np.arange(len(X_used)),
+    "x_i": X_used,
+    "f(x_i)": Y_used
+})
+
+# Làm đẹp bảng
+st.dataframe(
+    table_data.style.format({"x_i": "{:.6f}", "f(x_i)": "{:.6f}"}).set_precision(6),
+    use_container_width=True
+)
+
 # Tùy chọn đồ thị
 st.subheader("Tùy chọn hiển thị đồ thị")
 fill_toggle = st.checkbox("Hiển thị vùng tô dưới đồ thị (tích phân)", value=True)
@@ -207,3 +297,4 @@ if method in ["Simpson", "Cả hai"]:
     fig.add_trace(go.Scatter(x=X, y=Y, mode="markers", name="Các điểm chia", line=dict(color="red", dash="dot")))
     fig.update_layout(xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig, use_container_width=True)
+
