@@ -8,6 +8,9 @@ st.set_page_config(page_title="Tích phân gần đúng", layout="wide")
 st.title("Hai phương pháp tính gần đúng tích phân")
 st.markdown("### Phương pháp Hình thang và Simpson")
 
+MAX_N = 1000000  # giới hạn số bước lớn nhất
+MAX_PLOT_POINTS = 800  # giới hạn số điểm đồ thị
+
 # --- Chuẩn hóa & hàm hỗ trợ ---
 def normalize_expr(expr_str):
     return expr_str.strip().replace('^', '**').replace('ln', 'log').replace('√', 'sqrt').replace('π', 'pi')
@@ -64,7 +67,8 @@ try:
     I_exact = float(f_expr * (b - a)) if is_const else float(sp.integrate(f_expr, (x, a, b)))
 except Exception:
     I_exact = None
-    st.warning("Không thể tính tích phân chính xác bằng SymPy. Các tích phân gần đúng sẽ hiển thị cùng giá trị SymPy nếu lỗi xảy ra.")
+
+fallback_value = I_exact if I_exact is None or np.isnan(I_exact) or np.isinf(I_exact) else None
 
 # --- Hàm tính ---
 def compute_with_tolerance(f, a, b, rule, epsilon=None, n=None, fallback=None):
@@ -72,17 +76,17 @@ def compute_with_tolerance(f, a, b, rule, epsilon=None, n=None, fallback=None):
         return fallback, n or 1
     prev, n = None, 2 if epsilon else n
     while True:
+        if n > MAX_N:
+            return np.nan, n
         I = rule(f, a, b, n)
         if epsilon is None or (prev and abs(I - prev) < epsilon):
             return I, n
         prev, n = I, n*2
-        if n > 1e7:
-            raise RuntimeError("Không hội tụ. Hãy tăng ε.")
 
 # --- Hàm sai số lý thuyết ---
 def theoretical_error(f_expr, a, b, n, method):
     try:
-        grid = np.linspace(a, b, 1000)
+        grid = np.linspace(a, b, min(1000, MAX_PLOT_POINTS))
         if method == "Hình thang":
             f2 = sp.diff(f_expr, x, 2)
             f2_func = sp.lambdify(x, f2, "numpy")
@@ -109,14 +113,13 @@ if method in ["Simpson", "Cả hai"] and n_user % 2:
     n_user += 1
 
 I_trap = I_simp = err_trap = err_simp = None
-fallback_value = I_exact if I_exact is None or np.isnan(I_exact) or np.isinf(I_exact) else None
 
 if method in ["Hình thang", "Cả hai"]:
     I_trap, n_t = compute_with_tolerance(f_lambda, a, b, trapezoidal_rule, epsilon, n_user, fallback=fallback_value)
-    err_trap = abs(I_trap - I_exact) if I_exact and not fallback_value else None
+    err_trap = abs(I_trap - I_exact) if I_exact and fallback_value is None else None
 if method in ["Simpson", "Cả hai"]:
     I_simp, n_s = compute_with_tolerance(f_lambda, a, b, simpson_rule, epsilon, n_user, fallback=fallback_value)
-    err_simp = abs(I_simp - I_exact) if I_exact and not fallback_value else None
+    err_simp = abs(I_simp - I_exact) if I_exact and fallback_value is None else None
 
 # --- Hiển thị kết quả ---
 st.subheader("Kết quả")
@@ -135,17 +138,20 @@ if I_simp is not None: show_result(cols[2], "Simpson", I_simp, n_s, err_simp, "S
 # --- Bảng giá trị ---
 st.subheader("Bảng giá trị chi tiết")
 def make_table(xv, yv, w, h, title, coef):
+    yv = np.nan_to_num(yv, nan=np.nan, posinf=np.nan, neginf=np.nan)
     df = pd.DataFrame({"i": range(len(xv)), "x_i": xv, "f(x_i)": yv, "Trọng số": w, "Trọng số × f(x_i)": w*yv})
     st.markdown(f"#### {title}")
-    st.dataframe(df.style.format({"x_i": "{:.6f}", "f(x_i)": "{:.6f}", "Trọng số × f(x_i)": "{:.6f}"}), width='stretch')
+    st.dataframe(df.style.format({"x_i": "{:.6f}", "f(x_i)": "{:.6f}", "Trọng số × f(x_i)": "{:.6f}"}), width="stretch")
     st.latex(rf"\sum w_i f(x_i) = {np.sum(w*yv):.6f},\ I \approx {coef} \times {np.sum(w*yv):.6f} = {h*np.sum(w*yv):.6f}")
 
 if method in ["Hình thang", "Cả hai"]:
-    X = np.linspace(a, b, n_t + 1); Y = f_lambda(X)
+    X = np.linspace(a, b, min(n_t + 1, MAX_PLOT_POINTS))
+    Y = f_lambda(X)
     W = np.ones_like(X); W[1:-1] = 2; h = (b - a) / n_t
     make_table(X, Y, W, h/2, "Phương pháp Hình thang", "h/2")
 if method in ["Simpson", "Cả hai"]:
-    X = np.linspace(a, b, n_s + 1); Y = f_lambda(X)
+    X = np.linspace(a, b, min(n_s + 1, MAX_PLOT_POINTS))
+    Y = f_lambda(X)
     W = np.array([1 if i in [0,len(X)-1] else 4 if i%2 else 2 for i in range(len(X))])
     h = (b - a) / n_s
     make_table(X, Y, W, h/3, "Phương pháp Simpson (1/3)", "h/3")
@@ -154,41 +160,34 @@ if method in ["Simpson", "Cả hai"]:
 st.subheader("Tùy chọn hiển thị đồ thị")
 fill = st.checkbox("Hiển thị vùng tô tích phân", True)
 smooth = st.slider("Độ mịn cung parabol (Simpson)", 10, 400, 80, 10)
-xx = np.linspace(a, b, 800)
-yy = f_lambda(xx)
+xx = np.linspace(a, b, MAX_PLOT_POINTS)
+yy = np.nan_to_num(f_lambda(xx), nan=np.nan, posinf=np.nan, neginf=np.nan)
 
-def plot_area(method, X, Y, fillcolor, curvecolor, interp=False):
+def plot_area(method, X, Y, fillcolor, curvecolor):
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=xx, y=yy, mode="lines", name="f(x)", line=dict(color="blue")))
     if method == "Hình thang":
         for i in range(len(X)-1):
             xs, ys = [X[i], X[i], X[i+1], X[i+1]], [0, Y[i], Y[i+1], 0]
             if fill:
-                fig.add_trace(go.Scatter(x=xs, y=ys, fill="toself", fillcolor=fillcolor,
-                                         line=dict(color=fillcolor), showlegend=False))
+                fig.add_trace(go.Scatter(x=xs, y=ys, fill="toself", fillcolor=fillcolor, line=dict(color=fillcolor), showlegend=False))
         fig.add_trace(go.Scatter(x=X, y=Y, mode="lines+markers", name="Các điểm chia", line=dict(color="red", dash="dot")))
-    else:
+    else:  # Simpson
         for i in range(0, len(X)-2, 2):
             xs = np.linspace(X[i], X[i+2], smooth)
             ys = np.polyval(np.polyfit([X[i], X[i+1], X[i+2]], [Y[i], Y[i+1], Y[i+2]], 2), xs)
             if fill:
-                fig.add_trace(go.Scatter(x=np.concatenate((xs,[xs[-1],xs[0]])),
-                                         y=np.concatenate((ys,[0,0])),
-                                         fill="toself", fillcolor=fillcolor,
-                                         line=dict(color="rgba(0,0,0,0)"), showlegend=False))
-            fig.add_trace(go.Scatter(x=xs, y=ys, mode="lines",
-                                     name="Cung parabol nội suy" if i==0 else None,
+                fig.add_trace(go.Scatter(x=np.concatenate((xs,[xs[-1],xs[0]])), y=np.concatenate((ys,[0,0])),
+                                         fill="toself", fillcolor=fillcolor, line=dict(color="rgba(0,0,0,0)"), showlegend=False))
+            fig.add_trace(go.Scatter(x=xs, y=ys, mode="lines", name="Cung parabol nội suy" if i==0 else None,
                                      line=dict(color=curvecolor, dash="dashdot"), showlegend=(i==0)))
         fig.add_trace(go.Scatter(x=X, y=Y, mode="markers", name="Các điểm chia", line=dict(color="red", dash="dot")))
     fig.update_layout(xaxis_title="x", yaxis_title="f(x)", height=450)
-    st.plotly_chart(fig, width='stretch')
+    st.plotly_chart(fig, width="stretch")
 
 if method in ["Hình thang", "Cả hai"]:
     st.subheader("Minh họa phương pháp Hình thang")
-    plot_area("Hình thang", np.linspace(a, b, n_t + 1), f_lambda(np.linspace(a, b, n_t + 1)), "rgba(255,0,0,0.1)", "red")
-
+    plot_area("Hình thang", np.linspace(a, b, min(n_t + 1, MAX_PLOT_POINTS)), f_lambda(np.linspace(a, b, min(n_t + 1, MAX_PLOT_POINTS))), "rgba(255,0,0,0.1)", "red")
 if method in ["Simpson", "Cả hai"]:
     st.subheader("Minh họa phương pháp Simpson")
-    plot_area("Simpson", np.linspace(a, b, n_s + 1), f_lambda(np.linspace(a, b, n_s + 1)), "rgba(255,215,0,0.1)", "gold")
-
-
+    plot_area("Simpson", np.linspace(a, b, min(n_s + 1, MAX_PLOT_POINTS)), f_lambda(np.linspace(a, b, min(n_s + 1, MAX_PLOT_POINTS))), "rgba(255,215,0,0.1)", "gold")
