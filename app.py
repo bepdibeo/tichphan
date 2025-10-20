@@ -155,6 +155,30 @@ if I_simp is not None:
     e_simp_theory = theoretical_error(f_expr, a, b, n_s, "Simpson")
     cols[2].metric(f"Simpson (n={n_s})", f"{I_simp:.6f}", f"Sai số: {err_simp:.3g}" if err_simp else "")
 
+# So sánh 
+if method == "Cả hai" and I_trap_table is not None and I_simp_table is not None:
+    st.markdown("### So sánh hai phương pháp")
+
+    diff_abs = abs(I_simp_table - I_trap_table)
+    diff_percent = (diff_abs / abs(I_simp_table)) * 100 if I_simp_table != 0 else None
+
+    if I_exact is not None:
+        err_trap_exact = abs(I_trap_table - I_exact)
+        err_simp_exact = abs(I_simp_table - I_exact)
+        better = "Simpson" if err_simp_exact < err_trap_exact else "Hình thang"
+        st.success(
+            f"""
+            - **Phương pháp {better} cho độ chính xác cao hơn.**  
+            """
+        )
+    else:
+        st.info(
+            f"""
+            - Chênh lệch tuyệt đối giữa hai phương pháp: {diff_abs:.6e}  
+            - Sai khác tương đối: {diff_percent:.3f}%  
+            """
+        )
+
 # Hiển thị bảng giá trị chi tiết cho từng phương pháp 
 st.subheader("Bảng giá trị chi tiết cho từng phương pháp")
 def make_table_with_formula(x_vals, y_vals, weights, h, title, coef_text, coef_display):
@@ -169,7 +193,7 @@ def make_table_with_formula(x_vals, y_vals, weights, h, title, coef_text, coef_d
     total_sum = weighted_fx.sum()
     result = h * total_sum
 
-    st.markdown(f"#### ➤ {title}")
+    st.markdown(f"#### {title}")
     st.dataframe(
         df.style.format({
             "x_i": "{:.6f}",
@@ -208,30 +232,6 @@ if method in ["Simpson", "Cả hai"]:
     h_simp = (b - a) / n_s
     I_simp_table = make_table_with_formula(X_simp, Y_simp, W_simp, h_simp / 3, 
                                            "Phương pháp Simpson (1/3)", "h/3", r"\frac{h}{3}")
-
-# So sánh tổng hợp 
-if method == "Cả hai" and I_trap_table is not None and I_simp_table is not None:
-    st.markdown("### 🔍 So sánh tổng hợp hai phương pháp")
-
-    diff_abs = abs(I_simp_table - I_trap_table)
-    diff_percent = (diff_abs / abs(I_simp_table)) * 100 if I_simp_table != 0 else None
-
-    if I_exact is not None:
-        err_trap_exact = abs(I_trap_table - I_exact)
-        err_simp_exact = abs(I_simp_table - I_exact)
-        better = "Simpson" if err_simp_exact < err_trap_exact else "Hình thang"
-        st.success(
-            f"""
-            - **Phương pháp {better} cho độ chính xác cao hơn.**  
-            """
-        )
-    else:
-        st.info(
-            f"""
-            - Chênh lệch tuyệt đối giữa hai phương pháp: {diff_abs:.6e}  
-            - Sai khác tương đối: {diff_percent:.3f}%  
-            """
-        )
 
 # Tùy chọn đồ thị
 st.subheader("Tùy chọn hiển thị đồ thị")
