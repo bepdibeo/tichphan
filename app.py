@@ -39,6 +39,7 @@ def simpson_rule(f, a, b, n):
 # NHẬP LIỆU
 col1, col2 = st.columns(2)
 with col1:
+    expr_input = st.text_input("Nhập hàm f(x):", "x**2")
     a = st.number_input("Cận dưới a:", value=0.0)
     b = st.number_input("Cận trên b:", value=1.0)
    
@@ -251,6 +252,7 @@ if method in ["Simpson", "Cả hai"]:
     fig_simp.update_layout(
         xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig_simp, use_container_width=True)
+
 
 
 
