@@ -344,7 +344,13 @@ if method in ["Simpson", "Cả hai"] and n_used_simp is not None:
         line=dict(color="red", dash="dot")))
 
     fig_simp.update_layout(xaxis_title="x", yaxis_title="f(x)", height=450)
+    # Nếu người dùng tắt cả vùng tô và cung parabol thì vẫn phải có ít nhất 1 trace ngoài f(x)
+    if not fill_toggle and not show_parabola:
+    # thêm 1 trace ẩn để tránh lỗi trùng ID
+        fig_simp.add_trace(go.Scatter(
+            x=[None], y=[None],
+            mode="markers",
+            name="",
+            showlegend=False
+        ))
     st.plotly_chart(fig_simp, use_container_width=True)
-
-
-
