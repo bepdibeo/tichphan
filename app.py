@@ -54,8 +54,6 @@ def trapezoidal_rule(f, a, b, n):
 
 def simpson_rule(f, a, b, n):
     if n % 2 == 1:
-        st.warning("Phương pháp Simpson yêu cầu số khoảng chia n là **chẵn**. "
-                   f"Giá trị n = {n} đã được tự động tăng lên thành {n+1}.")
         n += 1
     x = np.linspace(a, b, n + 1)
     y = f(x)
@@ -121,7 +119,7 @@ try:
     I_exact = float(sp.integrate(f_expr, (x, a, b)))
 except Exception:
     I_exact = None
-    st.warning("Không thể tính tích phân chính xác (biểu tượng). Ứng dụng sẽ chỉ so sánh kết quả gần đúng nếu có thể.")
+    st.warning("Không thể tính tích phân chính xác. Ứng dụng sẽ chỉ so sánh kết quả gần đúng nếu có thể.")
 
 # Hàm tính theo sai số hoặc theo n 
 def compute_with_tolerance(f, a, b, rule_func, epsilon=None, n=None):
@@ -176,7 +174,7 @@ n_warning_msg = ""
 if mode == "Nhập số khoảng n" and n_user is not None and method in ["Simpson", "Cả hai"]:
     if n_user % 2 == 1:
         n_adj = n_user + 1
-        n_warning_msg = f"Chú ý: Simpson yêu cầu n chẵn — đã tự động tăng n từ {n_user} → {n_adj} để tính Simpson."
+        n_warning_msg = f"Chú ý: Simpson yêu cầu n chẵn —> đã tự động tăng n từ {n_user} thành {n_adj} để tính Simpson."
         st.warning(n_warning_msg)
         n_for_simp = n_adj
     else:
@@ -309,17 +307,37 @@ if method in ["Simpson", "Cả hai"] and n_used_simp is not None:
     Y_simp = f_lambda(X_simp)
     fig_simp = go.Figure()
     fig_simp.add_trace(go.Scatter(x=xx, y=yy, mode="lines", name="f(x)", line=dict(color="blue")))
-    if fill_toggle:
-        for i in range(0, len(X_simp)-2, 2):
-            xs = np.linspace(X_simp[i], X_simp[i+2], interp_points)
-            coeffs = np.polyfit([X_simp[i], X_simp[i+1], X_simp[i+2]],[Y_simp[i], Y_simp[i+1], Y_simp[i+2]], 2)
-            ys = np.polyval(coeffs, xs)
-            # vùng tô
-            fig_simp.add_trace(go.Scatter(x=np.concatenate((xs, [xs[-1], xs[0]])), y=np.concatenate((ys, [0.0, 0.0])), fill="toself", fillcolor="rgba(0,200,0,0.20)", line=dict(color="rgba(0,200,0,0.2)"), showlegend=False))
-            # parabolic arc
-            if show_parabola:
-                fig_simp.add_trace(go.Scatter(x=xs, y=ys, mode="lines", name="Cung parabol nội suy" if i==0 else None, line=dict(color="mediumseagreen", dash="dashdot"), showlegend=(i==0)))
-    fig_simp.add_trace(go.Scatter(x=X_simp, y=Y_simp, mode="lines+markers", name="Các điểm chia", line=dict(color="green", dash="dot")))
+
+    for i in range(0, len(X_simp)-2, 2):
+        xs = np.linspace(X_simp[i], X_simp[i+2], interp_points)
+        coeffs = np.polyfit(
+            [X_simp[i], X_simp[i+1], X_simp[i+2]],
+            [Y_simp[i], Y_simp[i+1], Y_simp[i+2]], 2)
+        ys = np.polyval(coeffs, xs)
+
+        # vùng tô
+        if fill_toggle:
+            fig_simp.add_trace(go.Scatter(
+                x=np.concatenate((xs, [xs[-1], xs[0]])),
+                y=np.concatenate((ys, [0.0, 0.0])),
+                fill="toself",
+                fillcolor="rgba(0,200,0,0.20)",
+                line=dict(color="rgba(0,200,0,0.2)"),
+                showlegend=False))
+
+        # cung parabol nội suy
+        if show_parabola:
+            fig_simp.add_trace(go.Scatter(
+                x=xs, y=ys, mode="lines",
+                name="Cung parabol nội suy" if i==0 else None,
+                line=dict(color="mediumseagreen", dash="dashdot"),
+                showlegend=(i==0)))
+
+    fig_simp.add_trace(go.Scatter(
+        x=X_simp, y=Y_simp,
+        mode="lines+markers",
+        name="Các điểm chia",
+        line=dict(color="green", dash="dot")))
+
     fig_simp.update_layout(xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig_simp, use_container_width=True)
-
