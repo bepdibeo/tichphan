@@ -330,14 +330,15 @@ if method in ["Simpson", "Cả hai"] and n_used_simp is not None:
             fig_simp.add_trace(go.Scatter(
                 x=xs, y=ys, mode="lines",
                 name="Cung parabol nội suy" if i==0 else None,
-                line=dict(color="mediumseagreen", dash="dashdot"),
+                line=dict(color="gold", dash="dashdot"),
                 showlegend=(i==0)))
 
     fig_simp.add_trace(go.Scatter(
         x=X_simp, y=Y_simp,
         mode="lines+markers",
         name="Các điểm chia",
-        line=dict(color="green", dash="dot")))
+        line=dict(color="red", dash="dot")))
 
     fig_simp.update_layout(xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig_simp, use_container_width=True)
+
