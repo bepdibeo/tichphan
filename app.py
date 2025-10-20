@@ -325,8 +325,8 @@ if method in ["Simpson", "Cả hai"] and n_used_simp is not None:
                 x=np.concatenate((xs, [xs[-1], xs[0]])),
                 y=np.concatenate((ys, [0.0, 0.0])),
                 fill="toself",
-                fillcolor="rgba(0,200,0,0.20)",
-                line=dict(color="rgba(0,200,0,0.2)"),
+                fillcolor="rgba(255,0,0,0.25)",
+                line=dict(color="rgba(255,0,0,0.2)"),
                 showlegend=False))
 
         # cung parabol nội suy
