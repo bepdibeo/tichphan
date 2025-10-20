@@ -5,7 +5,8 @@
 - Nếu không, cài từng thư viện: pip install streamlit numpy sympy plotly pandas
 - Cuối cùng, chạy lệnh: streamlit run app.py
 
-Ứng dụng được viết bằng **Python và Streamlit**, giúp **trực quan hóa quá trình tính gần đúng tích phân** bằng hai phương pháp cơ bản:
+- Xem file Giải thích code thư mục docs 
+Ứng dụng được viết bằng **Python và Streamlit**, minh họa hai phương pháp cơ bản:
 - **Phương pháp Hình thang (Trapezoidal rule)** 
 - **Phương pháp Simpson** 
 - Cho phép nhập **số khoảng chia `n`** hoặc **sai số `ε`**, chương trình tự động lặp đến khi hội tụ.
