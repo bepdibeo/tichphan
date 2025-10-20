@@ -12,16 +12,22 @@ st.markdown("### Phương pháp Hình thang và Simpson")
 def normalize_expr(expr_str):
     return expr_str.strip().replace('^', '**').replace('ln', 'log').replace('√', 'sqrt').replace('π', 'pi')
 
-def make_vectorized(f_lambda):  # 
-    return lambda x_arr: np.full_like(x_arr, float(f_lambda(0))) if np.isscalar(f_lambda(0)) else np.asarray(f_lambda(x_arr), dtype=float)
+def make_vectorized(f_lambda, is_const=False, const_val=None):
+    if is_const:
+        return lambda x: np.full_like(x, const_val, dtype=float)
+    return lambda x: np.asarray(f_lambda(x), dtype=float)
 
 def trapezoidal_rule(f, a, b, n):
-    x = np.linspace(a, b, n + 1); y = f(x); h = (b - a) / n
+    x = np.linspace(a, b, n + 1) 
+    y = f(x) 
+    h = (b - a) / n
     return h * (y[0]/2 + np.sum(y[1:-1]) + y[-1]/2)
 
 def simpson_rule(f, a, b, n):
     if n % 2: n += 1
-    x = np.linspace(a, b, n + 1); y = f(x); h = (b - a) / n
+    x = np.linspace(a, b, n + 1) 
+    y = f(x) 
+    h = (b - a) / n
     return (h/3)*(y[0] + y[-1] + 4*np.sum(y[1:-1:2]) + 2*np.sum(y[2:-2:2]))
 
 #  Giao diện nhập 
@@ -75,7 +81,8 @@ def compute_with_tolerance(f, a, b, rule, epsilon=None, n=None):
     prev, n = None, 2 if epsilon else n
     while True:
         I = rule(f, a, b, n)
-        if epsilon is None or (prev and abs(I - prev) < epsilon): return I, n
+        if epsilon is None or (prev and abs(I - prev) < epsilon): 
+            return I, n
         prev, n = I, n*2
         if n > 1e7: raise RuntimeError("Không hội tụ. Hãy tăng ε.")
 
@@ -122,7 +129,8 @@ cols[0].metric("Tích phân chính xác", f"{I_exact:.6f}" if I_exact else "—"
 
 def show_result(col, title, I, n, err, method):
     e_theory = theoretical_error(f_expr, a, b, n, method)
-    note = (f"Sai số [Thực: {err:.3g} " if err else "") + (f"| Lý thuyết: {e_theory:.3g}]" if e_theory else "")
+    note = (f"Sai số [Thực: {err:.3g} " if err is not None else "") + \
+       (f"| Lý thuyết: {e_theory:.3g}]" if e_theory is not None else "")
     col.metric(f"{title} (n={n})", f"{I:.6f}", note)
 
 if I_trap is not None: show_result(cols[1], "Hình thang", I_trap, n_t, err_trap, "Hình thang")
@@ -179,5 +187,3 @@ if method in ["Hình thang", "Cả hai"]:
 if method in ["Simpson", "Cả hai"]:
     st.subheader("Minh họa phương pháp Simpson")
     plot_area("Simpson", np.linspace(a, b, n_s + 1), f_lambda(np.linspace(a, b, n_s + 1)), "rgba(255,215,0,0.1)", "gold")
-
-
