@@ -149,12 +149,21 @@ cols[0].metric("Tích phân chính xác", f"{I_exact:.6f}" if I_exact is not Non
 
 if I_trap is not None:
     e_trap_theory = theoretical_error(f_expr, a, b, n_t, "Hình thang")
-    cols[1].metric(f"Hình thang (n={n_t})", f"{I_trap:.6f}", f"Sai số: {err_trap:.3g}" if err_trap else "")
+    note_trap = ""
+    if err_trap is not None:
+        note_trap += f"Thực: {err_trap:.3g}"
+    if e_trap_theory is not None:
+        note_trap += f" | Lý thuyết: {e_trap_theory:.3g}"
+    cols[1].metric(f"Hình thang (n={n_t})", f"{I_trap:.6f}", note_trap)
 
 if I_simp is not None:
     e_simp_theory = theoretical_error(f_expr, a, b, n_s, "Simpson")
-    cols[2].metric(f"Simpson (n={n_s})", f"{I_simp:.6f}", f"Sai số: {err_simp:.3g}" if err_simp else "")
-
+    note_simp = ""
+    if err_simp is not None:
+        note_simp += f"Thực: {err_simp:.3g}"
+    if e_simp_theory is not None:
+        note_simp += f" | Lý thuyết: {e_simp_theory:.3g}"
+    cols[2].metric(f"Simpson (n={n_s})", f"{I_simp:.6f}", note_simp)
 
 # So sánh chuyển lên ngay sau kết quả
 if method == "Cả hai" and I_trap is not None and I_simp is not None:
@@ -214,7 +223,6 @@ def make_table_with_formula(x_vals, y_vals, weights, h, title, coef_text, coef_d
     )
     return result
 
-
 # Hình thang
 I_trap_table = None
 if method in ["Hình thang", "Cả hai"]:
@@ -238,7 +246,6 @@ if method in ["Simpson", "Cả hai"]:
     h_simp = (b - a) / n_s
     I_simp_table = make_table_with_formula(X_simp, Y_simp, W_simp, h_simp / 3, 
                                            "Phương pháp Simpson (1/3)", "h/3", r"\frac{h}{3}")
-
 
 # Tùy chọn đồ thị
 st.subheader("Tùy chọn hiển thị đồ thị")
@@ -292,4 +299,3 @@ if method in ["Simpson", "Cả hai"]:
     fig.add_trace(go.Scatter(x=X, y=Y, mode="markers", name="Các điểm chia", line=dict(color="red", dash="dot")))
     fig.update_layout(xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig, use_container_width=True)
-
