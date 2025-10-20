@@ -168,7 +168,6 @@ def make_table_with_formula(x_vals, y_vals, weights, h, title, coef_text, coef_d
     })
     total_sum = weighted_fx.sum()
     result = h * total_sum
-    df.loc["Tổng"] = ["", "", "", "∑", total_sum]
 
     st.markdown(f"#### ➤ {title}")
     st.dataframe(
@@ -180,8 +179,10 @@ def make_table_with_formula(x_vals, y_vals, weights, h, title, coef_text, coef_d
         }),
         use_container_width=True
     )
-
-    st.latex(rf"I \approx {coef_display} \times {total_sum:.6f} = {result:.6f}")
+    st.markdown(
+        f"**Tổng:** ∑(Trọng số × f(xᵢ)) = {total_sum:.6f}  →  "
+        f"I ≈ {coef_display} × {total_sum:.6f} = {result:.6f}"
+    )
     return result
 
 # Hình thang
@@ -284,5 +285,3 @@ if method in ["Simpson", "Cả hai"]:
     fig.add_trace(go.Scatter(x=X, y=Y, mode="markers", name="Các điểm chia", line=dict(color="red", dash="dot")))
     fig.update_layout(xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig, use_container_width=True)
-
-
