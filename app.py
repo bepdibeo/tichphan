@@ -72,7 +72,6 @@ with col2:
     method = st.radio("Chọn phương pháp:", ["Hình thang", "Simpson", "Cả hai"])
     mode = st.radio("Chọn cách nhập:", ["Nhập số khoảng n", "Nhập sai số ε"])
     if mode == "Nhập số khoảng n":
-        if mode == "Nhập số khoảng n":
         n_input = st.number_input("Số khoảng chia n:", min_value=1, value=10, step=1)
         epsilon = None
     else:
@@ -323,3 +322,4 @@ if method in ["Simpson", "Cả hai"] and n_used_simp is not None:
     fig_simp.add_trace(go.Scatter(x=X_simp, y=Y_simp, mode="lines+markers", name="Các điểm chia", line=dict(color="green", dash="dot")))
     fig_simp.update_layout(xaxis_title="x", yaxis_title="f(x)", height=450)
     st.plotly_chart(fig_simp, use_container_width=True)
+
