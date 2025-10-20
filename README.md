@@ -5,7 +5,8 @@
 - Nếu không, cài từng thư viện: pip install streamlit numpy sympy plotly pandas
 - Cuối cùng, chạy lệnh: streamlit run app.py
 
-- Xem file Giải thích code thư mục docs 
+- Xem file Giải thích code thư mục docs
+ 
 Ứng dụng được viết bằng **Python và Streamlit**, minh họa hai phương pháp cơ bản:
 - **Phương pháp Hình thang (Trapezoidal rule)** 
 - **Phương pháp Simpson** 
