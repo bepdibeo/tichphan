@@ -133,7 +133,7 @@ def make_table(xv, yv, w, h, title, coef):
     df = pd.DataFrame({"i": range(len(xv)), "x_i": xv, "f(x_i)": yv, "Trọng số": w, "Trọng số × f(x_i)": w*yv})
     st.markdown(f"#### {title}")
     st.dataframe(df.style.format({"x_i": "{:.6f}", "f(x_i)": "{:.6f}", "Trọng số × f(x_i)": "{:.6f}"}), use_container_width=True)
-    st.latex(rf"\sum w_i f(x_i) = {np.sum(w*yv):.6f},\ I \approx {coef} \times {np.sum(w*yv):.6f} = {h*np.sum(w*yv):.6f}")
+    st.latex(rf"\sum w_i f(x_i) = {np.sum(w*yv):.6f}; \ I \approx {coef} \times {np.sum(w*yv):.6f} = {h*np.sum(w*yv):.6f}")
 
 if method in ["Hình thang", "Cả hai"]:
     X = np.linspace(a, b, n_t + 1); Y = f_lambda(X)
@@ -178,5 +178,3 @@ if method in ["Hình thang", "Cả hai"]:
 if method in ["Simpson", "Cả hai"]:
     st.subheader("Minh họa phương pháp Simpson")
     plot_area("Simpson", np.linspace(a, b, n_s + 1), f_lambda(np.linspace(a, b, n_s + 1)), "rgba(255,215,0,0.1)", "gold")
-
-
