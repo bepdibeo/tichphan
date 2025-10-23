@@ -32,7 +32,9 @@ def simpson_rule(f, a, b, n):
 col1, col2 = st.columns(2)
 with col1:
     expr_input = st.text_input("Nhập hàm f(x):", "x**2")
-    a, b = st.number_input("Cận dưới a:", 0.0), st.number_input("Cận trên b:", 1.0)
+    a = st.number_input("Cận dưới a:", value=0.0, min_value=-np.inf)
+    b = st.number_input("Cận trên b:", value=1.0, min_value=-np.inf)
+
 with col2:
     method = st.radio("Chọn phương pháp:", ["Hình thang", "Simpson", "Cả hai"])
     mode = st.radio("Chọn cách nhập:", ["Nhập số khoảng n", "Nhập sai số ε"])
@@ -176,3 +178,4 @@ if method in ["Hình thang", "Cả hai"]:
 if method in ["Simpson", "Cả hai"]:
     st.subheader("Minh họa phương pháp Simpson")
     plot_area("Simpson", np.linspace(a, b, n_s + 1), f_lambda(np.linspace(a, b, n_s + 1)), "rgba(255,215,0,0.1)", "gold")
+
