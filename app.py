@@ -61,8 +61,7 @@ try:
             y = np.array(y, dtype=float)
             y[np.isclose(x, 0)] = 1.0  # sin(x)/x = 1 tại x=0
             return y
-        return wrapper
-    
+        return wrapper   
     f_lambda = safe_func(f_lambda)
 
 except Exception:
@@ -192,4 +191,3 @@ if method in ["Hình thang", "Cả hai"]:
 if method in ["Simpson", "Cả hai"]:
     st.subheader("Minh họa phương pháp Simpson")
     plot_area("Simpson", np.linspace(a, b, n_s + 1), f_lambda(np.linspace(a, b, n_s + 1)), "rgba(255,215,0,0.1)", "gold")
-
