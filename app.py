@@ -3,6 +3,7 @@ import numpy as np
 import sympy as sp
 import plotly.graph_objects as go
 import pandas as pd
+import re
 
 st.set_page_config(page_title="Tích phân gần đúng", layout="wide")
 st.title("Hai phương pháp tính gần đúng tích phân")
@@ -10,7 +11,19 @@ st.markdown("### Phương pháp Hình thang và Simpson")
 
 #  Chuẩn hóa & hàm hỗ trợ 
 def normalize_expr(expr_str):
-    return expr_str.strip().replace('^', '**').replace('ln', 'log').replace('√', 'sqrt').replace('π', 'pi')
+    expr_str = expr_str.strip()
+    replacements = {
+        r'(?i)arcsin': 'asin',
+        r'(?i)arccos': 'acos',
+        r'(?i)arctan': 'atan',
+        r'(?i)ln': 'log',
+        r'√': 'sqrt',
+        r'π': 'pi',
+        r'\^': '**'
+    }
+    for old, new in replacements.items():
+        expr_str = re.sub(old, new, expr_str)
+    return expr_str
 
 def make_vectorized(f_lambda):  # 
     return lambda x_arr: np.full_like(x_arr, float(f_lambda(0))) if np.isscalar(f_lambda(0)) else np.asarray(f_lambda(x_arr), dtype=float)
@@ -179,5 +192,3 @@ if method in ["Hình thang", "Cả hai"]:
 if method in ["Simpson", "Cả hai"]:
     st.subheader("Minh họa phương pháp Simpson")
     plot_area("Simpson", np.linspace(a, b, n_s + 1), f_lambda(np.linspace(a, b, n_s + 1)), "rgba(255,215,0,0.1)", "gold")
-
-
