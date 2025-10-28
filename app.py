@@ -51,17 +51,21 @@ try:
     is_const = not f_expr.free_symbols
     const_val = float(f_expr) if is_const else None
     f_lambda = (lambda t: np.full_like(t, const_val)) if is_const else sp.lambdify(x, f_expr, "numpy")
-    def safe_func(f):
-        def wrapper(x):
-            y = f(x)
-            # Nếu x là số đơn (scalar)
-            if np.isscalar(y):
-                return 1.0 if np.isclose(x, 0) else y
-            # Nếu x là mảng
-            y = np.array(y, dtype=float)
-            y[np.isclose(x, 0)] = 1.0  # sin(x)/x = 1 tại x=0
-            return y
-        return wrapper   
+    def safe_func(f_expr):
+    f_num = sp.lambdify(x, f_expr, "numpy")
+    def wrapper(x_arr):
+        x_arr = np.array(x_arr, dtype=float)
+        y = f_num(x_arr)
+        y = np.array(y, dtype=float)
+        mask = ~np.isfinite(y)
+        for i, xi in enumerate(x_arr[mask]):
+            try:
+                y_idx = float(sp.limit(f_expr, x, xi))
+                y[np.where(mask)[0][i]] = y_idx
+            except Exception:
+                y[np.where(mask)[0][i]] = np.nan
+        return y
+    return wrapper
     f_lambda = safe_func(f_lambda)
 
 except Exception:
@@ -191,3 +195,4 @@ if method in ["Hình thang", "Cả hai"]:
 if method in ["Simpson", "Cả hai"]:
     st.subheader("Minh họa phương pháp Simpson")
     plot_area("Simpson", np.linspace(a, b, n_s + 1), f_lambda(np.linspace(a, b, n_s + 1)), "rgba(255,215,0,0.1)", "gold")
+
