@@ -4,5 +4,3 @@
 - Khi chạy trên máy cục bộ: cài đặt các thư viện: pip install -r requirements.txt
 - Nếu không, cài từng thư viện: pip install streamlit numpy sympy plotly pandas
 - Cuối cùng, chạy lệnh: streamlit run app.py
-
-- Xem file Giải thích code thư mục docs
