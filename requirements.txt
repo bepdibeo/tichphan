@@ -3,3 +3,4 @@ numpy
 sympy
 plotly
 pandas
+re
